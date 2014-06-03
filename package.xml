@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+	<name>robot_localization_tools</name>
+	<version>0.0.0</version>
+	<description>ROS node that publishes the localization error between a pose and the ground truth provided by gazebo simulator</description>
+	<maintainer email="carloscosta.cmcc@gmail.com">Carlos Costa</maintainer>
+	<license>BSD</license>
+	<author email="carloscosta.cmcc@gmail.com">Carlos Miguel Correia da Costa</author>
+
+	<buildtool_depend>catkin</buildtool_depend>
+	<build_depend>roscpp</build_depend>
+	<build_depend>tf2</build_depend>
+	<build_depend>angles</build_depend>	
+	<build_depend>std_msgs</build_depend>
+	<build_depend>geometry_msgs</build_depend>
+	<build_depend>gazebo_msgs</build_depend>	
+	<run_depend>roscpp</run_depend>
+	<run_depend>tf2</run_depend>
+	<run_depend>angles</run_depend>	
+	<run_depend>std_msgs</run_depend>
+	<run_depend>geometry_msgs</run_depend>
+	<run_depend>gazebo_msgs</run_depend>
+</package>
