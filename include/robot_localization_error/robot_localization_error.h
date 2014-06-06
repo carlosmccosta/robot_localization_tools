@@ -72,8 +72,9 @@ class RobotLocalizationError {
 	// ========================================================================   <private-section>   ==========================================================================
 	private:
 		// configurations fields
-		bool use_roll_pitch_yaw_angles_;
-		bool use_degrees_in_angles_;
+		bool use_roll_pitch_yaw_angles_; // false -> quaternions
+		bool use_degrees_in_angles_; // false -> radians
+		bool use_millimeters_in_distances_; // false -> meters
 
 
 		// state fields

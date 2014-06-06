@@ -16,7 +16,10 @@ namespace robot_localization_error {
 
 // =============================================================================  <public-section>  ============================================================================
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <constructors-destructor>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-RobotLocalizationError::RobotLocalizationError() {}
+RobotLocalizationError::RobotLocalizationError() :
+		use_roll_pitch_yaw_angles_(false),
+		use_degrees_in_angles_(false),
+		use_millimeters_in_distances_(false) {}
 RobotLocalizationError::~RobotLocalizationError() {}
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </constructors-destructor>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -42,6 +45,7 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 
 			private_node_handle->param("use_roll_pitch_yaw_angles", use_roll_pitch_yaw_angles_, false);
 			private_node_handle->param("use_degrees_in_angles", use_degrees_in_angles_, false);
+			private_node_handle->param("use_millimeters_in_distances", use_millimeters_in_distances_, false);
 		}
 	}
 }
@@ -57,6 +61,12 @@ void RobotLocalizationError::processPoseWithCovarianceStamped(const geometry_msg
 		pose_errors.pose.position.x = std::abs(pose->pose.pose.position.x - get_link_state_.response.link_state.pose.position.x);
 		pose_errors.pose.position.y = std::abs(pose->pose.pose.position.y - get_link_state_.response.link_state.pose.position.y);
 		pose_errors.pose.position.z = std::abs(pose->pose.pose.position.z - get_link_state_.response.link_state.pose.position.z);
+
+		if (use_millimeters_in_distances_) {
+			pose_errors.pose.position.x *= 1000.0;
+			pose_errors.pose.position.y *= 1000.0;
+			pose_errors.pose.position.z *= 1000.0;
+		}
 
 		if (use_roll_pitch_yaw_angles_) {
 			tf2Scalar roll_pose, pitch_pose, yaw_pose;
