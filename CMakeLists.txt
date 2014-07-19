@@ -12,6 +12,7 @@ set(${PROJECT_NAME}_CATKIN_COMPONENTS
     std_msgs
     geometry_msgs
     gazebo_msgs
+    laserscan_to_pointcloud
 )
 
 find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_COMPONENTS})

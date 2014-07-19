@@ -13,11 +13,13 @@
 	<build_depend>angles</build_depend>	
 	<build_depend>std_msgs</build_depend>
 	<build_depend>geometry_msgs</build_depend>
-	<build_depend>gazebo_msgs</build_depend>	
+	<build_depend>gazebo_msgs</build_depend>
+	<build_depend>laserscan_to_pointcloud</build_depend>
 	<run_depend>roscpp</run_depend>
 	<run_depend>tf2</run_depend>
 	<run_depend>angles</run_depend>	
 	<run_depend>std_msgs</run_depend>
 	<run_depend>geometry_msgs</run_depend>
 	<run_depend>gazebo_msgs</run_depend>
+	<run_depend>laserscan_to_pointcloud</run_depend>
 </package>

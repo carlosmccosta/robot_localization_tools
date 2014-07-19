@@ -16,6 +16,7 @@
 
 // ROS includes
 #include <ros/ros.h>
+#include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <angles/angles.h>
@@ -27,10 +28,10 @@
 // external libs includes
 
 // project includes
-
+#include <laserscan_to_pointcloud/tf_collector.h>
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </includes>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-namespace robot_localization_error {
+namespace robot_localization_tools {
 // ########################################################################   robot_localization_error   #######################################################################
 /**
  * \brief Description...
@@ -56,6 +57,8 @@ class RobotLocalizationError {
 		void readConfigurationFromParameterServer(ros::NodeHandlePtr& node_handle, ros::NodeHandlePtr& private_node_handle);
 		void processPoseWithCovarianceStamped(const geometry_msgs::PoseWithCovarianceStampedConstPtr& pose);
 		void getRollPitchYaw(const geometry_msgs::Quaternion& orientation, tf2Scalar& roll, tf2Scalar& pitch, tf2Scalar& yaw);
+		void start();
+		void updateLocalizationError();
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </LocalizationError-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <gets>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -75,10 +78,13 @@ class RobotLocalizationError {
 		bool use_roll_pitch_yaw_angles_; // false -> quaternions
 		bool use_degrees_in_angles_; // false -> radians
 		bool use_millimeters_in_distances_; // false -> meters
-
+		double publish_rate_;
+		std::string map_frame_id_;
+		std::string base_link_frame_id_;
 
 		// state fields
 		gazebo_msgs::GetLinkState get_link_state_;
+		laserscan_to_pointcloud::TFCollector tf_collector_;
 
 		// ros communication fields
 		ros::Subscriber pose_subscriber_;
