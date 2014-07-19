@@ -85,6 +85,7 @@ class RobotLocalizationError {
 		// state fields
 		gazebo_msgs::GetLinkState get_link_state_;
 		laserscan_to_pointcloud::TFCollector tf_collector_;
+		ros::Time last_update_time_;
 
 		// ros communication fields
 		ros::Subscriber pose_subscriber_;

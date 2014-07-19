@@ -20,7 +20,8 @@ RobotLocalizationError::RobotLocalizationError() :
 		use_roll_pitch_yaw_angles_(false),
 		use_degrees_in_angles_(false),
 		use_millimeters_in_distances_(false),
-		publish_rate_(10.0) {}
+		publish_rate_(100.0),
+		last_update_time_(ros::Time::now()) {}
 
 RobotLocalizationError::~RobotLocalizationError() {}
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </constructors-destructor>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -33,7 +34,7 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("gazebo_ground_truth_link", get_link_state_.request.link_name, std::string(""));
 	private_node_handle->param("map_frame_id", map_frame_id_, std::string("map"));
 	private_node_handle->param("base_link_frame_id", base_link_frame_id_, std::string("base_footprint"));
-	private_node_handle->param("publish_rate", publish_rate_, 10.0);
+	private_node_handle->param("publish_rate", publish_rate_, 100.0);
 
 	if (!gazebo_link_state_service_name.empty() && !get_link_state_.request.link_name.empty()) {
 		ros::service::waitForService(gazebo_link_state_service_name);
@@ -57,6 +58,8 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 
 
 void RobotLocalizationError::processPoseWithCovarianceStamped(const geometry_msgs::PoseWithCovarianceStampedConstPtr& pose) {
+	if (pose->header.stamp < last_update_time_) return;
+
 	gazebo_link_state_service_.call(get_link_state_);
 
 	if (get_link_state_.response.success) {
@@ -99,6 +102,7 @@ void RobotLocalizationError::processPoseWithCovarianceStamped(const geometry_msg
 		}
 
 		pose_error_publisher_.publish(pose_errors);
+		last_update_time_ = pose->header.stamp;
 	}
 }
 
@@ -125,21 +129,22 @@ void RobotLocalizationError::RobotLocalizationError::start() {
 
 void RobotLocalizationError::updateLocalizationError() {
 	tf2::Transform localization_tf;
-	geometry_msgs::PoseWithCovarianceStampedPtr pose(new geometry_msgs::PoseWithCovarianceStamped());
-	pose->header.frame_id = map_frame_id_;
-	pose->header.stamp = ros::Time::now();
+	ros::Time time_stamp = ros::Time::now();
 
-	tf_collector_.lookForTransform(localization_tf, map_frame_id_, base_link_frame_id_, pose->header.stamp);
+	if (tf_collector_.lookForTransform(localization_tf, map_frame_id_, base_link_frame_id_, time_stamp)) {
+		geometry_msgs::PoseWithCovarianceStampedPtr pose(new geometry_msgs::PoseWithCovarianceStamped());
+		pose->header.stamp = time_stamp;
+		pose->header.frame_id = map_frame_id_;
+		pose->pose.pose.position.x = localization_tf.getOrigin().getX();
+		pose->pose.pose.position.y = localization_tf.getOrigin().getY();
+		pose->pose.pose.position.z = localization_tf.getOrigin().getZ();
+		pose->pose.pose.orientation.x = localization_tf.getRotation().getX();
+		pose->pose.pose.orientation.y = localization_tf.getRotation().getY();
+		pose->pose.pose.orientation.z = localization_tf.getRotation().getZ();
+		pose->pose.pose.orientation.w = localization_tf.getRotation().getW();
 
-	pose->pose.pose.position.x = localization_tf.getOrigin().getX();
-	pose->pose.pose.position.y = localization_tf.getOrigin().getY();
-	pose->pose.pose.position.z = localization_tf.getOrigin().getZ();
-	pose->pose.pose.orientation.x = localization_tf.getRotation().getX();
-	pose->pose.pose.orientation.y = localization_tf.getRotation().getY();
-	pose->pose.pose.orientation.z = localization_tf.getRotation().getZ();
-	pose->pose.pose.orientation.w = localization_tf.getRotation().getW();
-
-	processPoseWithCovarianceStamped(pose);
+		processPoseWithCovarianceStamped(pose);
+	}
 }
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </LocalizationError-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
