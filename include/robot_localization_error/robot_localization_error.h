@@ -23,6 +23,7 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <gazebo_msgs/GetLinkState.h>
 
 // external libs includes
@@ -81,16 +82,22 @@ class RobotLocalizationError {
 		double publish_rate_;
 		std::string map_frame_id_;
 		std::string base_link_frame_id_;
+		int pose_publishers_sampling_rate_;
 
 		// state fields
 		gazebo_msgs::GetLinkState get_link_state_;
 		laserscan_to_pointcloud::TFCollector tf_collector_;
 		ros::Time last_update_time_;
+		geometry_msgs::PoseArray localization_poses_;
+		geometry_msgs::PoseArray simulation_poses_;
+		int number_poses_received_since_last_publish_;
 
 		// ros communication fields
 		ros::Subscriber pose_subscriber_;
 		ros::ServiceClient gazebo_link_state_service_;
 		ros::Publisher pose_error_publisher_;
+		ros::Publisher localization_poses_publisher_;
+		ros::Publisher simulation_poses_publisher_;
 	// ========================================================================   </private-section>  ==========================================================================
 };
 
