@@ -7,20 +7,20 @@
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <includes>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #include <ros/ros.h>
-#include <robot_localization_error/robot_localization_error.h>
+#include <robot_localization_error/twist_publisher.h>
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </includes>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 
 // ###################################################################################   <main>   ##############################################################################
 int main(int argc, char** argv) {
-	ros::init(argc, argv, "rlt_robot_localization_error");
+	ros::init(argc, argv, "rlt_twist_publisher");
 
 	ros::NodeHandlePtr node_handle(new ros::NodeHandle());
 	ros::NodeHandlePtr private_node_handle(new ros::NodeHandle("~"));
-	robot_localization_tools::RobotLocalizationError robot_localization_error;
-	robot_localization_error.readConfigurationFromParameterServer(node_handle, private_node_handle);
-	robot_localization_error.start();
+	robot_localization_tools::TwistPublisher twist_publisher;
+	twist_publisher.setupConfigurationFromParameterServer(node_handle, private_node_handle);
+	twist_publisher.publishTwistFromParameterServer(private_node_handle);
 
 	return 0;
 }

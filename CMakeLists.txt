@@ -39,10 +39,14 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
 )
 
-add_library(robot_localization_error src/robot_localization_error.cpp)
+add_library(rlt_robot_localization_error src/robot_localization_error.cpp)
+add_library(rlt_twist_publisher src/twist_publisher.cpp)
 
-add_executable(robot_localization_error_node src/robot_localization_error_node.cpp)
+add_executable(rlt_robot_localization_error_node src/robot_localization_error_node.cpp)
+add_executable(rlt_twist_publisher_node src/twist_publisher_node.cpp)
 
-target_link_libraries(robot_localization_error ${catkin_LIBRARIES})
-target_link_libraries(robot_localization_error_node robot_localization_error ${catkin_LIBRARIES})
+target_link_libraries(rlt_robot_localization_error ${catkin_LIBRARIES})
+target_link_libraries(rlt_twist_publisher ${catkin_LIBRARIES})
+target_link_libraries(rlt_robot_localization_error_node rlt_robot_localization_error ${catkin_LIBRARIES})
+target_link_libraries(rlt_twist_publisher_node rlt_twist_publisher ${catkin_LIBRARIES})
 

@@ -21,8 +21,9 @@ RobotLocalizationError::RobotLocalizationError() :
 		use_degrees_in_angles_(false),
 		use_millimeters_in_distances_(false),
 		publish_rate_(100.0),
-		number_poses_received_since_last_publish_(0),
-		last_update_time_(ros::Time::now()) {}
+		pose_publishers_sampling_rate_(10),
+		last_update_time_(ros::Time::now()),
+		number_poses_received_since_last_publish_(0){}
 
 RobotLocalizationError::~RobotLocalizationError() {}
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </constructors-destructor>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
