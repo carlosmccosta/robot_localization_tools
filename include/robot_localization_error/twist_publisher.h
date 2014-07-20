@@ -18,9 +18,10 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 
-// PCL includes
 // external libs includes
+
 // project includes
+
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </includes>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 namespace robot_localization_tools {
@@ -65,9 +66,6 @@ class TwistPublisher {
 
 	// ========================================================================   <private-section>   ==========================================================================
 	private:
-		// configuration fields
-		double publish_rate_;
-
 		// ros communication fields
 		ros::Publisher twist_publisher_;
 	// ========================================================================   </private-section>  ==========================================================================
