@@ -12,6 +12,7 @@ set(${PROJECT_NAME}_CATKIN_COMPONENTS
     std_msgs
     geometry_msgs
     gazebo_msgs
+    rosconsole
     laserscan_to_pointcloud
 )
 
