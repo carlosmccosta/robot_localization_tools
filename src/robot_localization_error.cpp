@@ -49,15 +49,15 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 			pose_subscriber_ = node_handle->subscribe(pose_topic_name, 10, &robot_localization_tools::RobotLocalizationError::processPoseWithCovarianceStamped, this);
 
 			std::string pose_error_publish_topic_name;
-			private_node_handle->param("pose_error_publish_topic", pose_error_publish_topic_name, std::string("localization_error"));
+			private_node_handle->param("pose_error_publish_topic", pose_error_publish_topic_name, std::string("localization/error"));
 			pose_error_publisher_ = node_handle->advertise<geometry_msgs::PoseStamped>(pose_error_publish_topic_name, 10);
 
 			std::string localization_poses_publisher_topic;
-			private_node_handle->param("localization_poses_publisher_topic", localization_poses_publisher_topic, std::string("localization_poses"));
+			private_node_handle->param("localization_poses_publisher_topic", localization_poses_publisher_topic, std::string("localization/poses"));
 			localization_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(localization_poses_publisher_topic, 10);
 
 			std::string simulation_poses_publisher_topic;
-			private_node_handle->param("simulation_poses_publisher_topic", simulation_poses_publisher_topic, std::string("simulation_poses"));
+			private_node_handle->param("simulation_poses_publisher_topic", simulation_poses_publisher_topic, std::string("localization/simulation_poses"));
 			simulation_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(simulation_poses_publisher_topic, 10);
 
 			private_node_handle->param("use_roll_pitch_yaw_angles", use_roll_pitch_yaw_angles_, false);
