@@ -29,7 +29,11 @@ int main(int argc, char** argv) {
 		std::stringstream ss;
 		ss << argv[1];
 		for (int i = 2; i < argc; ++i) {
-			ss << " " << argv[i];
+			if (argv[i] == "AND") {
+				ss << " &&";
+			} else {
+				ss << " " << argv[i];
+			}
 		}
 
 		ROS_INFO_STREAM("Calling system command: " << ss.str());
