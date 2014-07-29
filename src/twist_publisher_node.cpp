@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 #include <robot_localization_error/twist_publisher.h>
 #include <cstdlib>
+#include <cstring>
 #include <sstream>
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </includes>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -29,7 +30,7 @@ int main(int argc, char** argv) {
 		std::stringstream ss;
 		ss << argv[1];
 		for (int i = 2; i < argc; ++i) {
-			if (argv[i] == "AND") {
+			if (strcmp(argv[i], "AND") == 0) {
 				ss << " &&";
 			} else {
 				ss << " " << argv[i];
