@@ -27,16 +27,17 @@ void TwistPublisher::setupConfigurationFromParameterServer(ros::NodeHandlePtr& n
 
 void TwistPublisher::publishTwistFromParameterServer(ros::NodeHandlePtr& private_node_handle) {
 	XmlRpc::XmlRpcValue twist_msgs_yaml;
-	private_node_handle->getParam("TwistPublisher/Messages", twist_msgs_yaml);
-	geometry_msgs::Twist twist_msg;
+	if (private_node_handle->getParam("TwistPublisher/Messages", twist_msgs_yaml)) {
+		geometry_msgs::Twist twist_msg;
 
-	for (int twist_msg_config = 0; twist_msg_config < twist_msgs_yaml.size(); ++twist_msg_config) {
-		twist_msg.linear.x = twist_msgs_yaml[twist_msg_config]["linear.x"];
-		twist_msg.angular.z = twist_msgs_yaml[twist_msg_config]["angular.z"];
-		twist_publisher_.publish(twist_msg);
+		for (int twist_msg_config = 0; twist_msg_config < twist_msgs_yaml.size(); ++twist_msg_config) {
+			twist_msg.linear.x = twist_msgs_yaml[twist_msg_config].hasMember("linear.x") ? (double)twist_msgs_yaml[twist_msg_config]["linear.x"] : 0.0;
+			twist_msg.angular.z = twist_msgs_yaml[twist_msg_config].hasMember("angular.z") ? (double)twist_msgs_yaml[twist_msg_config]["angular.z"] : 0.0;
+			twist_publisher_.publish(twist_msg);
 
-		ros::Duration twist_duration(twist_msgs_yaml[twist_msg_config]["duration"]);
-		twist_duration.sleep();
+			ros::Duration twist_duration(twist_msgs_yaml[twist_msg_config].hasMember("duration") ? (double)twist_msgs_yaml[twist_msg_config]["duration"] : 0.0);
+			twist_duration.sleep();
+		}
 	}
 }
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </TwistPublisher-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
