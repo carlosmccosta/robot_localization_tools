@@ -56,6 +56,7 @@ class RobotLocalizationError {
 
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <LocalizationError-functions>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		void readConfigurationFromParameterServer(ros::NodeHandlePtr& node_handle, ros::NodeHandlePtr& private_node_handle);
+		void processPoseStamped(const geometry_msgs::PoseStampedConstPtr& pose);
 		void processPoseWithCovarianceStamped(const geometry_msgs::PoseWithCovarianceStampedConstPtr& pose);
 		void getRollPitchYaw(const geometry_msgs::Quaternion& orientation, tf2Scalar& roll, tf2Scalar& pitch, tf2Scalar& yaw);
 		void start();
@@ -94,6 +95,7 @@ class RobotLocalizationError {
 
 		// ros communication fields
 		ros::Subscriber pose_subscriber_;
+		ros::Subscriber pose_with_covariance_subscriber_;
 		ros::ServiceClient gazebo_link_state_service_;
 		ros::Publisher pose_error_publisher_;
 		ros::Publisher localization_poses_publisher_;
