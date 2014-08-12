@@ -58,6 +58,7 @@ class RobotLocalizationError {
 		void readConfigurationFromParameterServer(ros::NodeHandlePtr& node_handle, ros::NodeHandlePtr& private_node_handle);
 		void processPoseStamped(const geometry_msgs::PoseStampedConstPtr& pose);
 		void processPoseWithCovarianceStamped(const geometry_msgs::PoseWithCovarianceStampedConstPtr& pose);
+		bool getSimulationPose(const ros::Time& time_stamp, geometry_msgs::Pose& simulation_pose_out);
 		void getRollPitchYaw(const geometry_msgs::Quaternion& orientation, tf2Scalar& roll, tf2Scalar& pitch, tf2Scalar& yaw);
 		void start();
 		void updateLocalizationError();
@@ -81,9 +82,13 @@ class RobotLocalizationError {
 		bool use_degrees_in_angles_; // false -> radians
 		bool use_millimeters_in_distances_; // false -> meters
 		double publish_rate_;
+		bool invert_tf_from_map_ground_truth_frame_id_;
+		std::string map_ground_truth_frame_id_;
 		std::string map_frame_id_;
+		std::string odom_frame_id_;
 		std::string base_link_frame_id_;
 		int pose_publishers_sampling_rate_;
+
 
 		// state fields
 		gazebo_msgs::GetLinkState get_link_state_;
