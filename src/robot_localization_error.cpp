@@ -17,7 +17,6 @@ namespace robot_localization_tools {
 // =============================================================================  <public-section>  ============================================================================
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <constructors-destructor>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 RobotLocalizationError::RobotLocalizationError() :
-		use_roll_pitch_yaw_angles_(false),
 		use_degrees_in_angles_(false),
 		use_millimeters_in_distances_(false),
 		publish_rate_(100.0),
@@ -60,7 +59,7 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 
 	std::string pose_error_publish_topic_name;
 	private_node_handle->param("pose_error_publish_topic", pose_error_publish_topic_name, std::string("localization_error"));
-	pose_error_publisher_ = node_handle->advertise<geometry_msgs::PoseStamped>(pose_error_publish_topic_name, 10, true);
+	pose_error_publisher_ = node_handle->advertise<robot_localization_tools::LocalizationError>(pose_error_publish_topic_name, 10, true);
 
 	std::string localization_poses_publisher_topic;
 	private_node_handle->param("localization_poses_publisher_topic", localization_poses_publisher_topic, std::string("localization_poses"));
@@ -70,7 +69,6 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("simulation_poses_publisher_topic", simulation_poses_publisher_topic, std::string("simulation_poses"));
 	simulation_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(simulation_poses_publisher_topic, 10, true);
 
-	private_node_handle->param("use_roll_pitch_yaw_angles", use_roll_pitch_yaw_angles_, false);
 	private_node_handle->param("use_degrees_in_angles", use_degrees_in_angles_, false);
 	private_node_handle->param("use_millimeters_in_distances", use_millimeters_in_distances_, false);
 }
@@ -82,43 +80,42 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 
 	if (getSimulationPose(pose->header.stamp, simulation_pose)) {
 		geometry_msgs::Pose localization_pose = pose->pose;
-		geometry_msgs::PoseStamped pose_errors;
+		robot_localization_tools::LocalizationError pose_errors;
 		pose_errors.header = pose->header;
 
-		pose_errors.pose.position.x = localization_pose.position.x - simulation_pose.position.x;
-		pose_errors.pose.position.y = localization_pose.position.y - simulation_pose.position.y;
-		pose_errors.pose.position.z = localization_pose.position.z - simulation_pose.position.z;
+		// translation errors
+		pose_errors.translation_errors.x = localization_pose.position.x - simulation_pose.position.x;
+		pose_errors.translation_errors.y = localization_pose.position.y - simulation_pose.position.y;
+		pose_errors.translation_errors.z = localization_pose.position.z - simulation_pose.position.z;
 
 		if (use_millimeters_in_distances_) {
-			pose_errors.pose.position.x *= 1000.0;
-			pose_errors.pose.position.y *= 1000.0;
-			pose_errors.pose.position.z *= 1000.0;
+			pose_errors.translation_errors.x *= 1000.0;
+			pose_errors.translation_errors.y *= 1000.0;
+			pose_errors.translation_errors.z *= 1000.0;
 		}
 
-		if (use_roll_pitch_yaw_angles_) {
-			tf2Scalar roll_pose, pitch_pose, yaw_pose;
-			tf2Scalar roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth;
+		pose_errors.translation_error = std::abs(pose_errors.translation_errors.x) + std::abs(pose_errors.translation_errors.y) + std::abs(pose_errors.translation_errors.z);
 
-			getRollPitchYaw(localization_pose.orientation, roll_pose, pitch_pose, yaw_pose);
-			getRollPitchYaw(simulation_pose.orientation, roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth);
 
-			pose_errors.pose.orientation.x = roll_pose - roll_pose_ground_truth;
-			pose_errors.pose.orientation.y = pitch_pose - pitch_pose_ground_truth;
-			pose_errors.pose.orientation.z = yaw_pose - yaw_pose_ground_truth;
+		// rotation errors
+		tf2Scalar roll_pose, pitch_pose, yaw_pose;
+		tf2Scalar roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth;
 
-			if (use_degrees_in_angles_) {
-				pose_errors.pose.orientation.x = angles::to_degrees(pose_errors.pose.orientation.x);
-				pose_errors.pose.orientation.y = angles::to_degrees(pose_errors.pose.orientation.y);
-				pose_errors.pose.orientation.z = angles::to_degrees(pose_errors.pose.orientation.z);
-			}
+		getRollPitchYaw(localization_pose.orientation, roll_pose, pitch_pose, yaw_pose);
+		getRollPitchYaw(simulation_pose.orientation, roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth);
 
-			pose_errors.pose.orientation.w = pose_errors.pose.orientation.x + pose_errors.pose.orientation.y + pose_errors.pose.orientation.z;
-		} else {
-			pose_errors.pose.orientation.x = localization_pose.orientation.x - simulation_pose.orientation.x;
-			pose_errors.pose.orientation.y = localization_pose.orientation.y - simulation_pose.orientation.y;
-			pose_errors.pose.orientation.z = localization_pose.orientation.z - simulation_pose.orientation.z;
-			pose_errors.pose.orientation.w = localization_pose.orientation.w - simulation_pose.orientation.w;
+		pose_errors.rotation_errors.x = roll_pose - roll_pose_ground_truth;
+		pose_errors.rotation_errors.y = pitch_pose - pitch_pose_ground_truth;
+		pose_errors.rotation_errors.z = yaw_pose - yaw_pose_ground_truth;
+
+		if (use_degrees_in_angles_) {
+			pose_errors.rotation_errors.x = angles::to_degrees(pose_errors.rotation_errors.x);
+			pose_errors.rotation_errors.y = angles::to_degrees(pose_errors.rotation_errors.y);
+			pose_errors.rotation_errors.z = angles::to_degrees(pose_errors.rotation_errors.z);
 		}
+
+		pose_errors.rotation_error = std::abs(pose_errors.rotation_errors.x) + std::abs(pose_errors.rotation_errors.y) + std::abs(pose_errors.rotation_errors.z);
+
 
 		if (!pose_error_publisher_.getTopic().empty()) pose_error_publisher_.publish(pose_errors);
 

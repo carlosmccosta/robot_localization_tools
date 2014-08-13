@@ -13,6 +13,7 @@
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  <includes>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 // std includes
 #include <string>
+#include <cmath>
 
 // ROS includes
 #include <ros/ros.h>
@@ -29,6 +30,7 @@
 // external libs includes
 
 // project includes
+#include <robot_localization_tools/LocalizationError.h>
 #include <laserscan_to_pointcloud/tf_collector.h>
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </includes>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -78,7 +80,6 @@ class RobotLocalizationError {
 	// ========================================================================   <private-section>   ==========================================================================
 	private:
 		// configurations fields
-		bool use_roll_pitch_yaw_angles_; // false -> quaternions
 		bool use_degrees_in_angles_; // false -> radians
 		bool use_millimeters_in_distances_; // false -> meters
 		double publish_rate_;
