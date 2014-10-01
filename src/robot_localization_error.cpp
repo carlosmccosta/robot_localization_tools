@@ -22,6 +22,7 @@ RobotLocalizationError::RobotLocalizationError() :
 		publish_rate_(100.0),
 		invert_tf_from_map_ground_truth_frame_id_(false),
 		pose_publishers_sampling_rate_(10),
+		tf_lookup_timeout_(0),
 		last_update_time_(ros::Time::now()),
 		number_poses_received_since_last_publish_(0) {}
 
@@ -41,6 +42,9 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("base_link_frame_id", base_link_frame_id_, std::string("base_footprint"));
 	private_node_handle->param("publish_rate", publish_rate_, 100.0);
 	private_node_handle->param("pose_publishers_sampling_rate", pose_publishers_sampling_rate_, 10);
+	double tf_lookup_timeout;
+	private_node_handle->param("tf_lookup_timeout", tf_lookup_timeout, 0.1);
+	tf_lookup_timeout_.fromSec(tf_lookup_timeout);
 
 	if (map_ground_truth_frame_id_.empty() && !gazebo_link_state_service_name.empty() && !get_link_state_.request.link_name.empty()) {
 		ros::service::waitForService(gazebo_link_state_service_name);
@@ -94,10 +98,18 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 			pose_errors.translation_errors.z *= 1000.0;
 		}
 
-		pose_errors.translation_error = std::abs(pose_errors.translation_errors.x) + std::abs(pose_errors.translation_errors.y) + std::abs(pose_errors.translation_errors.z);
+		pose_errors.translation_error = std::sqrt(
+				pose_errors.translation_errors.x * pose_errors.translation_errors.x +
+				pose_errors.translation_errors.y * pose_errors.translation_errors.y +
+				pose_errors.translation_errors.z * pose_errors.translation_errors.z);
 
 
 		// rotation errors
+		tf2::Quaternion pose_q(pose->pose.orientation.x, pose->pose.orientation.y, pose->pose.orientation.z, pose->pose.orientation.w);
+		tf2::Quaternion pose_simulation_q(simulation_pose.orientation.x, simulation_pose.orientation.y, simulation_pose.orientation.z, simulation_pose.orientation.w);
+		pose_errors.rotation_error = pose_q.angleShortestPath(pose_simulation_q);
+
+		// <-- todo: cant use r p y
 		tf2Scalar roll_pose, pitch_pose, yaw_pose;
 		tf2Scalar roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth;
 
@@ -107,14 +119,14 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 		pose_errors.rotation_errors.x = roll_pose - roll_pose_ground_truth;
 		pose_errors.rotation_errors.y = pitch_pose - pitch_pose_ground_truth;
 		pose_errors.rotation_errors.z = yaw_pose - yaw_pose_ground_truth;
+		// -->
 
 		if (use_degrees_in_angles_) {
 			pose_errors.rotation_errors.x = angles::to_degrees(pose_errors.rotation_errors.x);
 			pose_errors.rotation_errors.y = angles::to_degrees(pose_errors.rotation_errors.y);
 			pose_errors.rotation_errors.z = angles::to_degrees(pose_errors.rotation_errors.z);
+			pose_errors.rotation_error = angles::to_degrees(pose_errors.rotation_error);
 		}
-
-		pose_errors.rotation_error = std::abs(pose_errors.rotation_errors.x) + std::abs(pose_errors.rotation_errors.y) + std::abs(pose_errors.rotation_errors.z);
 
 
 		if (!pose_error_publisher_.getTopic().empty()) pose_error_publisher_.publish(pose_errors);
