@@ -1,5 +1,5 @@
 Header header
 geometry_msgs/Vector3 translation_errors
-geometry_msgs/Vector3 rotation_errors
 float64 translation_error
-float64 rotation_error
+geometry_msgs/Vector3 rotation_error_axis
+float64 rotation_error_angle

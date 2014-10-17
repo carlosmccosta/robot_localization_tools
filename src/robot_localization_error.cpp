@@ -117,10 +117,11 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 		robot_localization_tools::LocalizationError pose_errors;
 		pose_errors.header = pose->header;
 
+
 		// translation errors
-		pose_errors.translation_errors.x = localization_pose.position.x - ground_truth.position.x;
-		pose_errors.translation_errors.y = localization_pose.position.y - ground_truth.position.y;
-		pose_errors.translation_errors.z = localization_pose.position.z - ground_truth.position.z;
+		pose_errors.translation_errors.x = ground_truth.position.x - localization_pose.position.x;
+		pose_errors.translation_errors.y = ground_truth.position.y - localization_pose.position.y;
+		pose_errors.translation_errors.z = ground_truth.position.z - localization_pose.position.z;
 
 		if (use_millimeters_in_distances_) {
 			pose_errors.translation_errors.x *= 1000.0;
@@ -137,25 +138,16 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 		// rotation errors
 		tf2::Quaternion pose_localization_q(pose->pose.orientation.x, pose->pose.orientation.y, pose->pose.orientation.z, pose->pose.orientation.w);
 		tf2::Quaternion pose_grund_truth_q(ground_truth.orientation.x, ground_truth.orientation.y, ground_truth.orientation.z, ground_truth.orientation.w);
-		pose_errors.rotation_error = pose_localization_q.angleShortestPath(pose_grund_truth_q);
-
-		// <-- todo: cant use r p y
-		tf2Scalar roll_pose, pitch_pose, yaw_pose;
-		tf2Scalar roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth;
-
-		getRollPitchYaw(localization_pose.orientation, roll_pose, pitch_pose, yaw_pose);
-		getRollPitchYaw(ground_truth.orientation, roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth);
-
-		pose_errors.rotation_errors.x = roll_pose - roll_pose_ground_truth;
-		pose_errors.rotation_errors.y = pitch_pose - pitch_pose_ground_truth;
-		pose_errors.rotation_errors.z = yaw_pose - yaw_pose_ground_truth;
-		// -->
+		tf2::Quaternion rotation_error_q = pose_grund_truth_q * pose_localization_q.inverse();
+		rotation_error_q.normalize();
+		tf2::Vector3 rotation_error_axis = rotation_error_q.getAxis();
+		pose_errors.rotation_error_angle = pose_grund_truth_q.angleShortestPath(pose_localization_q);
+		pose_errors.rotation_error_axis.x = rotation_error_axis.getX();
+		pose_errors.rotation_error_axis.y = rotation_error_axis.getY();
+		pose_errors.rotation_error_axis.z = rotation_error_axis.getZ();
 
 		if (use_degrees_in_angles_) {
-			pose_errors.rotation_errors.x = angles::to_degrees(pose_errors.rotation_errors.x);
-			pose_errors.rotation_errors.y = angles::to_degrees(pose_errors.rotation_errors.y);
-			pose_errors.rotation_errors.z = angles::to_degrees(pose_errors.rotation_errors.z);
-			pose_errors.rotation_error = angles::to_degrees(pose_errors.rotation_error);
+			pose_errors.rotation_error_angle = angles::to_degrees(pose_errors.rotation_error_angle);
 		}
 
 
