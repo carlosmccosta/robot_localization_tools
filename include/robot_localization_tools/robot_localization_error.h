@@ -14,6 +14,7 @@
 // std includes
 #include <string>
 #include <cmath>
+#include <fstream>
 
 // ROS includes
 #include <ros/ros.h>
@@ -60,10 +61,11 @@ class RobotLocalizationError {
 		void readConfigurationFromParameterServer(ros::NodeHandlePtr& node_handle, ros::NodeHandlePtr& private_node_handle);
 		void processPoseStamped(const geometry_msgs::PoseStampedConstPtr& pose);
 		void processPoseWithCovarianceStamped(const geometry_msgs::PoseWithCovarianceStampedConstPtr& pose);
-		bool getSimulationPose(const ros::Time& time_stamp, geometry_msgs::Pose& simulation_pose_out);
+		bool getGroundTruthPose(const ros::Time& time_stamp, geometry_msgs::Pose& simulation_pose_out);
 		void getRollPitchYaw(const geometry_msgs::Quaternion& orientation, tf2Scalar& roll, tf2Scalar& pitch, tf2Scalar& yaw);
 		void start();
 		void updateLocalizationError();
+		bool savePoseToFile(std::ofstream& output_stream, geometry_msgs::Pose& pose, ros::Time timestamp);
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </LocalizationError-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <gets>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -90,6 +92,10 @@ class RobotLocalizationError {
 		std::string base_link_frame_id_;
 		int pose_publishers_sampling_rate_;
 		ros::Duration tf_lookup_timeout_;
+		std::ofstream localization_poses_output_stream_;
+		std::ofstream ground_truth_poses_output_stream_;
+		bool save_poses_timestamp_;
+		bool save_poses_orientation_;
 
 
 		// state fields
@@ -97,7 +103,7 @@ class RobotLocalizationError {
 		laserscan_to_pointcloud::TFCollector tf_collector_;
 		ros::Time last_update_time_;
 		geometry_msgs::PoseArray localization_poses_;
-		geometry_msgs::PoseArray simulation_poses_;
+		geometry_msgs::PoseArray ground_truth_poses_;
 		int number_poses_received_since_last_publish_;
 
 		// ros communication fields
@@ -106,7 +112,7 @@ class RobotLocalizationError {
 		ros::ServiceClient gazebo_link_state_service_;
 		ros::Publisher pose_error_publisher_;
 		ros::Publisher localization_poses_publisher_;
-		ros::Publisher simulation_poses_publisher_;
+		ros::Publisher ground_truth_poses_publisher_;
 	// ========================================================================   </private-section>  ==========================================================================
 };
 

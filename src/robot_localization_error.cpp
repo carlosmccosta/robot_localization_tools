@@ -22,6 +22,8 @@ RobotLocalizationError::RobotLocalizationError() :
 		publish_rate_(100.0),
 		invert_tf_from_map_ground_truth_frame_id_(false),
 		pose_publishers_sampling_rate_(10),
+		save_poses_timestamp_(true),
+		save_poses_orientation_(true),
 		tf_lookup_timeout_(0),
 		last_update_time_(ros::Time::now()),
 		number_poses_received_since_last_publish_(0) {}
@@ -42,9 +44,33 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("base_link_frame_id", base_link_frame_id_, std::string("base_footprint"));
 	private_node_handle->param("publish_rate", publish_rate_, 100.0);
 	private_node_handle->param("pose_publishers_sampling_rate", pose_publishers_sampling_rate_, 10);
+
+	if (pose_publishers_sampling_rate_ < 1) pose_publishers_sampling_rate_ = 1;
+
 	double tf_lookup_timeout;
 	private_node_handle->param("tf_lookup_timeout", tf_lookup_timeout, 0.1);
 	tf_lookup_timeout_.fromSec(tf_lookup_timeout);
+
+	std::string localization_poses_output_filename, ground_truth_poses_output_filename;
+	private_node_handle->param("localization_poses_output_filename", localization_poses_output_filename, std::string(""));
+	private_node_handle->param("ground_truth_poses_output_filename", ground_truth_poses_output_filename, std::string(""));
+	private_node_handle->param("save_poses_timestamp", save_poses_timestamp_, true);
+	private_node_handle->param("save_poses_orientation", save_poses_orientation_, true);
+
+	if (!localization_poses_output_filename.empty()) {
+		localization_poses_output_stream_.open(localization_poses_output_filename.c_str());
+		localization_poses_output_stream_ << "# poses from localization system" << std::endl;
+		localization_poses_output_stream_ << "# timestamp_seconds_posix_time translation_x_meters translation_y_meters translation_z_meters quaternion_x quaternion_y quaternion_z quaternion_w" << std::endl;
+		ROS_INFO_STREAM("Saving localization poses to file " << localization_poses_output_filename);
+	}
+
+	if (!ground_truth_poses_output_filename.empty()) {
+		ground_truth_poses_output_stream_.open(ground_truth_poses_output_filename.c_str());
+		ground_truth_poses_output_stream_ << "# poses from ground truth" << std::endl;
+		ground_truth_poses_output_stream_ << "# timestamp_seconds_posix_time translation_x_meters translation_y_meters translation_z_meters quaternion_x quaternion_y quaternion_z quaternion_w" << std::endl;
+		ROS_INFO_STREAM("Saving ground truth poses associated with the localization poses to file " << ground_truth_poses_output_filename);
+	}
+
 
 	if (map_ground_truth_frame_id_.empty() && !gazebo_link_state_service_name.empty() && !get_link_state_.request.link_name.empty()) {
 		ros::service::waitForService(gazebo_link_state_service_name);
@@ -69,9 +95,9 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("localization_poses_publisher_topic", localization_poses_publisher_topic, std::string("localization_poses"));
 	localization_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(localization_poses_publisher_topic, 10, true);
 
-	std::string simulation_poses_publisher_topic;
-	private_node_handle->param("simulation_poses_publisher_topic", simulation_poses_publisher_topic, std::string("simulation_poses"));
-	simulation_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(simulation_poses_publisher_topic, 10, true);
+	std::string ground_truth_poses_publisher_topic;
+	private_node_handle->param("ground_truth_poses_publisher_topic", ground_truth_poses_publisher_topic, std::string("ground_truth_poses"));
+	ground_truth_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(ground_truth_poses_publisher_topic, 10, true);
 
 	private_node_handle->param("use_degrees_in_angles", use_degrees_in_angles_, false);
 	private_node_handle->param("use_millimeters_in_distances", use_millimeters_in_distances_, false);
@@ -80,17 +106,21 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 
 void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStampedConstPtr& pose) {
 	if (pose->header.stamp < last_update_time_) return;
-	geometry_msgs::Pose simulation_pose;
+	geometry_msgs::Pose ground_truth;
 
-	if (getSimulationPose(pose->header.stamp, simulation_pose)) {
+	if (getGroundTruthPose(pose->header.stamp, ground_truth)) {
 		geometry_msgs::Pose localization_pose = pose->pose;
+
+		savePoseToFile(localization_poses_output_stream_, localization_pose, pose->header.stamp);
+		savePoseToFile(ground_truth_poses_output_stream_, ground_truth, pose->header.stamp);
+
 		robot_localization_tools::LocalizationError pose_errors;
 		pose_errors.header = pose->header;
 
 		// translation errors
-		pose_errors.translation_errors.x = localization_pose.position.x - simulation_pose.position.x;
-		pose_errors.translation_errors.y = localization_pose.position.y - simulation_pose.position.y;
-		pose_errors.translation_errors.z = localization_pose.position.z - simulation_pose.position.z;
+		pose_errors.translation_errors.x = localization_pose.position.x - ground_truth.position.x;
+		pose_errors.translation_errors.y = localization_pose.position.y - ground_truth.position.y;
+		pose_errors.translation_errors.z = localization_pose.position.z - ground_truth.position.z;
 
 		if (use_millimeters_in_distances_) {
 			pose_errors.translation_errors.x *= 1000.0;
@@ -105,16 +135,16 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 
 
 		// rotation errors
-		tf2::Quaternion pose_q(pose->pose.orientation.x, pose->pose.orientation.y, pose->pose.orientation.z, pose->pose.orientation.w);
-		tf2::Quaternion pose_simulation_q(simulation_pose.orientation.x, simulation_pose.orientation.y, simulation_pose.orientation.z, simulation_pose.orientation.w);
-		pose_errors.rotation_error = pose_q.angleShortestPath(pose_simulation_q);
+		tf2::Quaternion pose_localization_q(pose->pose.orientation.x, pose->pose.orientation.y, pose->pose.orientation.z, pose->pose.orientation.w);
+		tf2::Quaternion pose_grund_truth_q(ground_truth.orientation.x, ground_truth.orientation.y, ground_truth.orientation.z, ground_truth.orientation.w);
+		pose_errors.rotation_error = pose_localization_q.angleShortestPath(pose_grund_truth_q);
 
 		// <-- todo: cant use r p y
 		tf2Scalar roll_pose, pitch_pose, yaw_pose;
 		tf2Scalar roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth;
 
 		getRollPitchYaw(localization_pose.orientation, roll_pose, pitch_pose, yaw_pose);
-		getRollPitchYaw(simulation_pose.orientation, roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth);
+		getRollPitchYaw(ground_truth.orientation, roll_pose_ground_truth, pitch_pose_ground_truth, yaw_pose_ground_truth);
 
 		pose_errors.rotation_errors.x = roll_pose - roll_pose_ground_truth;
 		pose_errors.rotation_errors.y = pitch_pose - pitch_pose_ground_truth;
@@ -138,10 +168,10 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 				localization_poses_publisher_.publish(localization_poses_);
 			}
 
-			simulation_poses_.poses.push_back(simulation_pose);
-			if (!simulation_poses_publisher_.getTopic().empty()) {
-				simulation_poses_.header = pose->header;
-				simulation_poses_publisher_.publish(simulation_poses_);
+			ground_truth_poses_.poses.push_back(ground_truth);
+			if (!ground_truth_poses_publisher_.getTopic().empty()) {
+				ground_truth_poses_.header = pose->header;
+				ground_truth_poses_publisher_.publish(ground_truth_poses_);
 			}
 
 			number_poses_received_since_last_publish_ = 0;
@@ -162,11 +192,11 @@ void RobotLocalizationError::processPoseWithCovarianceStamped(const geometry_msg
 }
 
 
-bool RobotLocalizationError::getSimulationPose(const ros::Time& time_stamp, geometry_msgs::Pose& simulation_pose_out) {
+bool RobotLocalizationError::getGroundTruthPose(const ros::Time& time_stamp, geometry_msgs::Pose& ground_truth_pose_out) {
 	if (map_ground_truth_frame_id_.empty() && gazebo_link_state_service_.isValid()) {
 		gazebo_link_state_service_.call(get_link_state_);
 		if (get_link_state_.response.success) {
-			simulation_pose_out = get_link_state_.response.link_state.pose;
+			ground_truth_pose_out = get_link_state_.response.link_state.pose;
 			return true;
 		}
 	} else {
@@ -176,14 +206,14 @@ bool RobotLocalizationError::getSimulationPose(const ros::Time& time_stamp, geom
 				tf2::Transform localization_tf_base_to_odom;
 				if (tf_collector_.lookForTransform(localization_tf_base_to_odom, odom_frame_id_, base_link_frame_id_, time_stamp)) {
 					tf2::Transform localization_tf = localization_tf_odom_to_map.inverse() * localization_tf_base_to_odom;
-					laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, simulation_pose_out);
+					laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, ground_truth_pose_out);
 					return true;
 				}
 			}
 		} else {
 			tf2::Transform localization_tf;
 			if (tf_collector_.lookForTransform(localization_tf, map_ground_truth_frame_id_, base_link_frame_id_, time_stamp)) {
-				laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, simulation_pose_out);
+				laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, ground_truth_pose_out);
 				return true;
 			}
 		}
@@ -201,6 +231,7 @@ void RobotLocalizationError::getRollPitchYaw(const geometry_msgs::Quaternion& or
 
 void RobotLocalizationError::RobotLocalizationError::start() {
 	if (publish_rate_ > 0) {
+		ROS_INFO_STREAM("Computing localization error by regular sampling tf at " << publish_rate_ << " Hz");
 		ros::Rate publish_rate(publish_rate_);
 		while (ros::ok()) {
 			updateLocalizationError();
@@ -208,8 +239,12 @@ void RobotLocalizationError::RobotLocalizationError::start() {
 			ros::spinOnce();
 		}
 	} else {
+		ROS_INFO("Computing localization error from pose topics");
 		ros::spin();
 	}
+
+	if (localization_poses_output_stream_.is_open()) { localization_poses_output_stream_.close(); }
+	if (ground_truth_poses_output_stream_.is_open()) { ground_truth_poses_output_stream_.close(); }
 }
 
 
@@ -226,6 +261,19 @@ void RobotLocalizationError::updateLocalizationError() {
 	}
 }
 
+
+bool RobotLocalizationError::savePoseToFile(std::ofstream& output_stream, geometry_msgs::Pose& pose, ros::Time timestamp) {
+	if (output_stream.is_open()) {
+		if (save_poses_timestamp_) { output_stream << timestamp.sec << "." << timestamp.nsec << " "; }
+		output_stream << pose.position.x << " " <<pose.position.y << " " << pose.position.z;
+		if (save_poses_orientation_) { output_stream << " " << pose.orientation.x << " " << pose.orientation.y << " " <<pose.orientation.z << " " << pose.orientation.w; }
+		output_stream << std::endl;
+
+		return true;
+	}
+
+	return false;
+}
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </LocalizationError-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 // =============================================================================  </public-section>  ===========================================================================
 
