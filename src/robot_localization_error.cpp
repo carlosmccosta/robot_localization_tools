@@ -142,9 +142,16 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 		rotation_error_q.normalize();
 		tf2::Vector3 rotation_error_axis = rotation_error_q.getAxis();
 		pose_errors.rotation_error_angle = pose_grund_truth_q.angleShortestPath(pose_localization_q);
+//		pose_errors.rotation_error_angle = rotation_error_q.getAngleShortestPath();
 		pose_errors.rotation_error_axis.x = rotation_error_axis.getX();
 		pose_errors.rotation_error_axis.y = rotation_error_axis.getY();
 		pose_errors.rotation_error_axis.z = rotation_error_axis.getZ();
+
+		if (std::abs(rotation_error_q.getAngleShortestPath() - pose_errors.rotation_error_angle) > 0.025) {
+			pose_errors.rotation_error_axis.x *= -1;
+			pose_errors.rotation_error_axis.y *= -1;
+			pose_errors.rotation_error_axis.z *= -1;
+		}
 
 		if (use_degrees_in_angles_) {
 			pose_errors.rotation_error_angle = angles::to_degrees(pose_errors.rotation_error_angle);
