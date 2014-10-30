@@ -21,6 +21,7 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Vector3.h>
 #include <angles/angles.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -66,6 +67,7 @@ class RobotLocalizationError {
 		void start();
 		void updateLocalizationError();
 		bool savePoseToFile(std::ofstream& output_stream, geometry_msgs::Pose& pose, ros::Time timestamp);
+		bool addPoseFileHeader(std::ofstream& output_stream, std::string first_line);
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </LocalizationError-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <gets>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -95,7 +97,8 @@ class RobotLocalizationError {
 		std::ofstream localization_poses_output_stream_;
 		std::ofstream ground_truth_poses_output_stream_;
 		bool save_poses_timestamp_;
-		bool save_poses_orientation_;
+		bool save_poses_orientation_quaternion_;
+		bool save_poses_orientation_vector_;
 
 
 		// state fields

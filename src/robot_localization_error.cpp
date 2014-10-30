@@ -23,7 +23,8 @@ RobotLocalizationError::RobotLocalizationError() :
 		invert_tf_from_map_ground_truth_frame_id_(false),
 		pose_publishers_sampling_rate_(10),
 		save_poses_timestamp_(true),
-		save_poses_orientation_(true),
+		save_poses_orientation_quaternion_(true),
+		save_poses_orientation_vector_(true),
 		tf_lookup_timeout_(0),
 		last_update_time_(ros::Time::now()),
 		number_poses_received_since_last_publish_(0) {}
@@ -55,19 +56,18 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("localization_poses_output_filename", localization_poses_output_filename, std::string(""));
 	private_node_handle->param("ground_truth_poses_output_filename", ground_truth_poses_output_filename, std::string(""));
 	private_node_handle->param("save_poses_timestamp", save_poses_timestamp_, true);
-	private_node_handle->param("save_poses_orientation", save_poses_orientation_, true);
+	private_node_handle->param("save_poses_orientation_quaternion", save_poses_orientation_quaternion_, true);
+	private_node_handle->param("save_poses_orientation_vector", save_poses_orientation_vector_, true);
 
 	if (!localization_poses_output_filename.empty()) {
 		localization_poses_output_stream_.open(localization_poses_output_filename.c_str());
-		localization_poses_output_stream_ << "# poses from localization system" << std::endl;
-		localization_poses_output_stream_ << "# timestamp_seconds_posix_time translation_x_meters translation_y_meters translation_z_meters quaternion_x quaternion_y quaternion_z quaternion_w" << std::endl;
+		addPoseFileHeader(localization_poses_output_stream_, "# poses from localization system");
 		ROS_INFO_STREAM("Saving localization poses to file " << localization_poses_output_filename);
 	}
 
 	if (!ground_truth_poses_output_filename.empty()) {
 		ground_truth_poses_output_stream_.open(ground_truth_poses_output_filename.c_str());
-		ground_truth_poses_output_stream_ << "# poses from ground truth" << std::endl;
-		ground_truth_poses_output_stream_ << "# timestamp_seconds_posix_time translation_x_meters translation_y_meters translation_z_meters quaternion_x quaternion_y quaternion_z quaternion_w" << std::endl;
+		addPoseFileHeader(ground_truth_poses_output_stream_, "# poses from ground truth");
 		ROS_INFO_STREAM("Saving ground truth poses associated with the localization poses to file " << ground_truth_poses_output_filename);
 	}
 
@@ -265,7 +265,29 @@ bool RobotLocalizationError::savePoseToFile(std::ofstream& output_stream, geomet
 	if (output_stream.is_open()) {
 		if (save_poses_timestamp_) { output_stream << timestamp.sec << "." << timestamp.nsec << " "; }
 		output_stream << pose.position.x << " " <<pose.position.y << " " << pose.position.z;
-		if (save_poses_orientation_) { output_stream << " " << pose.orientation.x << " " << pose.orientation.y << " " <<pose.orientation.z << " " << pose.orientation.w; }
+		if (save_poses_orientation_quaternion_) { output_stream << " " << pose.orientation.x << " " << pose.orientation.y << " " << pose.orientation.z << " " << pose.orientation.w; }
+		if (save_poses_orientation_vector_) {
+			tf2::Vector3 orientation_vector = tf2::quatRotate(tf2::Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w).normalize(), tf2::Vector3(1,0,0)).normalize();
+			output_stream << " " << orientation_vector.x() << " " << orientation_vector.y() << " " << orientation_vector.z();
+		}
+		output_stream << std::endl;
+
+		return true;
+	}
+
+	return false;
+}
+
+
+bool RobotLocalizationError::addPoseFileHeader(std::ofstream& output_stream, std::string first_line) {
+	if (output_stream.is_open()) {
+		output_stream << first_line << std::endl;
+		output_stream << "#";
+
+		if (save_poses_timestamp_) { output_stream << " timestamp_seconds_posix_time"; }
+		output_stream << " translation_x_meters translation_y_meters translation_z_meters";
+		if (save_poses_orientation_quaternion_) { output_stream << " orientation_quaternion_x orientation_quaternion_y orientation_quaternion_z orientation_quaternion_w"; }
+		if (save_poses_orientation_vector_) { output_stream << " orientation_vector_x orientation_vector_y orientation_vector_z"; }
 		output_stream << std::endl;
 
 		return true;

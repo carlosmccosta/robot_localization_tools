@@ -15,7 +15,8 @@
 	<arg name="localization_poses_output_filename" default="" />
 	<arg name="ground_truth_poses_output_filename" default="" />
 	<arg name="save_poses_timestamp" default="true" />
-	<arg name="save_poses_orientation" default="true" />
+	<arg name="save_poses_orientation_quaternion" default="true" />
+	<arg name="save_poses_orientation_vector" default="true" />
 
 	<node pkg="robot_localization_tools" type="rlt_robot_localization_error_node" name="rlt_robot_localization_error" output="screen">
 		<param name="gazebo_link_state_service" type="str" value="/gazebo/get_link_state" />
@@ -38,6 +39,7 @@
 		<param name="localization_poses_output_filename" type="str" value="$(arg localization_poses_output_filename)" />
 		<param name="ground_truth_poses_output_filename" type="str" value="$(arg ground_truth_poses_output_filename)" />
 		<param name="save_poses_timestamp" type="bool" value="$(arg save_poses_timestamp)" />
-		<param name="save_poses_orientation" type="bool" value="$(arg save_poses_orientation)" />
+		<param name="save_poses_orientation_quaternion" type="bool" value="$(arg save_poses_orientation_quaternion)" />
+		<param name="save_poses_orientation_vector" type="bool" value="$(arg save_poses_orientation_vector)" />
 	</node>
 </launch>
