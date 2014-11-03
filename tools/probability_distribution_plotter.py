@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Fits probability distributions to data coming from a csv file and outputs their graphs')
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_FILE', type=str, required=True, help='CSV input file')
-    parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and png)')
+    parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
     parser.add_argument('-b', metavar='BIN_WIDTH', type=float, required=False, default=0.5, help='Histogram bin width')
     parser.add_argument('-a', metavar='AXIS_TICKER_WIDTH', type=int, required=False, default=4, help='How many bins fit in each x axis ticker')
     parser.add_argument('-c', metavar='FILE_COLUNM', type=int, required=False, default=1, help='CSV data column to use')
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     number_bins = (np.max(data) // bin_width) + 1
     x_min = 0.0
     x_max = number_bins * bin_width
-    n, bins, patches = plt.hist(data, number_bins, range=(x_min, x_max), normed=1, histtype='bar', facecolor='grey', alpha=1.0)
+    n, bins, patches = plt.hist(data, number_bins, range=(x_min, x_max), normed=1, histtype='bar', facecolor='grey', alpha=0.75)
 
     max_bin_count = 0
     max_bin_count_x = 0
@@ -67,11 +67,12 @@ if __name__ == "__main__":
 
     plt.xlabel(args.x)
     plt.ylabel('Probability')
-    plt.title(args.t)
+    graph_title = plt.title(args.t, fontsize=16)
+    graph_title.set_y(1.01)
 
     plt.minorticks_on()
-    plt.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.20, alpha=0.5)
-    plt.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.05, alpha=0.5)
+    plt.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.30, alpha=0.5)
+    plt.grid(b=True, which='minor', color='k', linestyle=':', linewidth=0.05, alpha=0.5)
     majorLocator = tk.MultipleLocator(bin_width * args.a)
     minorLocator = tk.MultipleLocator(bin_width)
     ax.xaxis.set_major_locator(majorLocator)
@@ -115,7 +116,7 @@ if __name__ == "__main__":
             else:
                 output_str += (',' + str(par_est[0]))
             plot_label='$\mathrm{%s\ distribution:}\ location=%s,\ scale=%s,\ shape=%s$' % (distr_names[idx], str(loc_est), str(scale_est), str(par_est[0]))
-        ax.plot(x_values, y_values, distr_colors[idx], linewidth=1, label=plot_label)
+        ax.plot(x_values, y_values, distr_colors[idx], linewidth=1, label=plot_label, alpha=0.75)
 
     graph_legend = plt.legend(fancybox=True)
     graph_legend.get_frame().set_alpha(0.5)
@@ -127,10 +128,10 @@ if __name__ == "__main__":
     ##########################################################################
     # output
     if args.s:
-        plt.savefig('%s.svg' % args.o)
-        plt.savefig('%s.eps' % args.o)
-        plt.savefig('%s.pdf' % args.o)
-        plt.savefig('%s.png' % args.o, dpi=300, bbox_inches='tight')
+        plt.savefig('%s.svg' % args.o, bbox_inches='tight')
+        plt.savefig('%s.eps' % args.o, bbox_inches='tight')
+        plt.savefig('%s.pdf' % args.o, bbox_inches='tight')
+#         plt.savefig('%s.png' % args.o, dpi=300, bbox_inches='tight')
 
     if args.d:
         plt.show()

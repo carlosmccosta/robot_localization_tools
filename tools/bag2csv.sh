@@ -21,10 +21,11 @@ for topic in `rostopic list -b ${input_file}.bag` ; do
 		echo "Ignoring topic ${topic}"
 	else
 		echo "Saving data from topic ${topic} into file ${output_file}"
-		`rostopic echo -p -b ${input_file}.bag ${topic} > ${output_file}`
+		rostopic echo -p -b ${input_file}.bag ${topic} > ${output_file} &
 	fi
 done
 
+wait
 
 echo "\n####################################################################################################"
 echo "##### Finished extraction of data from ${input_file}.bag"

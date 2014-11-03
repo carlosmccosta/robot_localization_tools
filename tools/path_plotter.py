@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PLots paths from CSV files with pose information')
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_FILES', type=str, required=True, help='CSV input files')
-    parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and png)')
+    parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
     parser.add_argument('-p', metavar='FILE_POSITION_START_COLUNM', type=int, required=False, default=1, help='CSV data column where the arrows position starts')
     parser.add_argument('-v', metavar='FILE_VECTOR_START_COLUNM', type=int, required=False, default=8, help='CSV data column where the arrows vector starts')
     parser.add_argument('-a', metavar='ARROW_SCALE', type=float, required=False, default=0.0025, help='Arrow scale')
@@ -37,9 +37,10 @@ if __name__ == "__main__":
     # graph setup
     fig, ax = plt.subplots(figsize=(19.2, 10.8), dpi=100)
 
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    plt.title(args.t)
+    plt.xlabel('x position (meters)')
+    plt.ylabel('y position (meters)')
+    graph_title = plt.title(args.t, fontsize=16)
+    graph_title.set_y(1.01)
 
     plt.minorticks_on()
 #     plt.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.3, alpha=0.7)
@@ -71,13 +72,13 @@ if __name__ == "__main__":
         y_min = np.min([np.min(arrow_positions_y), y_min])
         y_max = np.max([np.max(arrow_positions_y), y_max])
 
-        print file, number_arrows
+        print "Plotting path for file", file, "with", number_arrows, "poses"
 
         for i in range(0, number_arrows):
 #             print arrow_positions_x[i], arrow_positions_y[i], arrow_directions_x[i], arrow_directions_y[i]
 
             ax.arrow(arrow_positions_x[i], arrow_positions_y[i], arrow_directions_x[i] * args.a, arrow_directions_y[i] * args.a,
-                     shape='full', width=0.0002, linewidth=0.0002, length_includes_head=True, head_width=0.0006, head_length=0.001, color=arrow_colors[idx])
+                     shape='full', width=0.0002, linewidth=0.0002, length_includes_head=True, head_width=0.0006, head_length=0.001, color=arrow_colors[idx], alpha=0.5)
 
 #             ax.annotate(str(i), fontsize=0.1,
 #                         xy=(arrow_positions_x[i] + arrow_directions_x[i] * args.a, arrow_positions_y[i] + arrow_directions_y[i] * args.a),
@@ -92,10 +93,18 @@ if __name__ == "__main__":
 
     plt.axis('tight')
     axlim = list(plt.axis())
-    axlim[0] = x_min - abs(x_min * 0.1)
-    axlim[1] = x_max + abs(x_max * 0.1)
-    axlim[2] = y_min - abs(y_min * 0.1)
-    axlim[3] = y_max + abs(y_max * 0.1)
+    diff_x = (x_max - x_min)
+    diff_y = (y_max - y_min)
+    axlim[0] = x_min - diff_x * 0.025
+    axlim[1] = x_max + diff_x * 0.025
+    axlim[2] = y_min - diff_y * 0.025
+    axlim[3] = y_max + diff_y * 0.025
+    if axlim[0] == axlim[1]:
+        axlim[0] = -1
+        axlim[1] = 1
+    if axlim[2] == axlim[3]:
+        axlim[2] = -1
+        axlim[3] = 1
     plt.axis(axlim)
     plt.draw()
 
@@ -104,10 +113,10 @@ if __name__ == "__main__":
     ##########################################################################
     # output
     if args.s:
-        plt.savefig('%s.svg' % args.o)
-        plt.savefig('%s.eps' % args.o)
-        plt.savefig('%s.pdf' % args.o)
-        plt.savefig('%s.png' % args.o, dpi=1000, bbox_inches='tight')
+        plt.savefig('%s.svg' % args.o, bbox_inches='tight')
+        plt.savefig('%s.eps' % args.o, bbox_inches='tight')
+        plt.savefig('%s.pdf' % args.o, bbox_inches='tight')
+#         plt.savefig('%s.png' % args.o, bbox_inches='tight', dpi=1500)
 
     if args.d:
         plt.show()
