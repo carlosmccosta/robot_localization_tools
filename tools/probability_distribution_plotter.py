@@ -1,8 +1,8 @@
-#!/home/carloscosta/anaconda/bin/python
+#!/usr/bin/env python
 
-# To use your system scipy package change to #!/usr/bin/python
-# Be warned, in Ubuntu 12.04 the fitting of the lognorm and genextreme distribution doesn't work (if using the default scipy 0.9.0 package)
-# If you don't want to install anaconda (from http://continuum.io/downloads), then update your scipy installation to version 0.14.0
+# Be warned, in Ubuntu 12.04 the fitting of the lognorm and genextreme distribution doesn't work with the default scipy 0.9.0 package
+# Either update your scipy installation to version 0.14.0
+# or install anaconda (from http://continuum.io/downloads) and prepend to your PATH the anaconda installation folder (usually ~/anaconda/bin)
 
 
 import argparse
@@ -30,8 +30,8 @@ if __name__ == "__main__":
     parser.add_argument('-c', metavar='FILE_COLUNM', type=int, required=False, default=1, help='CSV data column to use')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Probability distributions', help='Graph title')
     parser.add_argument('-x', metavar='GRAPH_X_AXIS_LABEL', type=str, required=False, default='Values', help='Graph x axis label')
-    parser.add_argument('-s', metavar='SAVE_GRAPHS', type='bool', required=False, default=True, help='Save graphs to files using the name prefix specified with -o')
-    parser.add_argument('-d', metavar='DISPLAY_GRAPHS', type='bool', required=False, default=False, help='Show graphs')
+    parser.add_argument('-s', metavar='SAVE_GRAPH', type='bool', required=False, default=True, help='Save graph to files using the name prefix specified with -o')
+    parser.add_argument('-d', metavar='DISPLAY_GRAPH', type='bool', required=False, default=False, help='Show graph')
     parser.add_argument('-f', metavar='FORMATED_OUTPUT', type='bool', required=False, default=True, help='Console output in readable format or in csv style (if False)')
     args = parser.parse_args()
 
@@ -70,8 +70,8 @@ if __name__ == "__main__":
     plt.title(args.t)
 
     plt.minorticks_on()
-    plt.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.3)
-    plt.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.1)
+    plt.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.20, alpha=0.5)
+    plt.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.05, alpha=0.5)
     majorLocator = tk.MultipleLocator(bin_width * args.a)
     minorLocator = tk.MultipleLocator(bin_width)
     ax.xaxis.set_major_locator(majorLocator)
@@ -117,7 +117,9 @@ if __name__ == "__main__":
             plot_label='$\mathrm{%s\ distribution:}\ location=%s,\ scale=%s,\ shape=%s$' % (distr_names[idx], str(loc_est), str(scale_est), str(par_est[0]))
         ax.plot(x_values, y_values, distr_colors[idx], linewidth=1, label=plot_label)
 
-    plt.legend()
+    graph_legend = plt.legend(fancybox=True)
+    graph_legend.get_frame().set_alpha(0.5)
+    plt.draw()
     print output_str
 
 
@@ -127,6 +129,7 @@ if __name__ == "__main__":
     if args.s:
         plt.savefig('%s.svg' % args.o)
         plt.savefig('%s.eps' % args.o)
+        plt.savefig('%s.pdf' % args.o)
         plt.savefig('%s.png' % args.o, dpi=300, bbox_inches='tight')
 
     if args.d:
