@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+# coding=UTF-8
 
 
 import argparse
+import ntpath
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tk
@@ -22,12 +25,13 @@ if __name__ == "__main__":
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_FILES', type=str, required=True, help='CSV input files')
     parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
-    parser.add_argument('-p', metavar='FILE_POSITION_START_COLUNM', type=int, required=False, default=1, help='CSV data column where the arrows position starts')
-    parser.add_argument('-v', metavar='FILE_VECTOR_START_COLUNM', type=int, required=False, default=8, help='CSV data column where the arrows vector starts')
+    parser.add_argument('-p', metavar='FILE_POSITION_START_COLUNM', type=int, required=False, default=0, help='CSV data column where the arrows position starts')
+    parser.add_argument('-v', metavar='FILE_VECTOR_START_COLUNM', type=int, required=False, default=2, help='CSV data column where the arrows vector starts')
     parser.add_argument('-a', metavar='ARROW_SCALE', type=float, required=False, default=0.0025, help='Arrow scale')
     parser.add_argument('-c', metavar='ARROWS_COLORS', type=str, required=False, default='g+b', help='Arrows colors for each file')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Paths', help='Graph title')
     parser.add_argument('-s', metavar='SAVE_GRAPH', type='bool', required=False, default=True, help='Save graphs to files using the name prefix specified with -o')
+    parser.add_argument('-q', metavar='ADD_FILE_EXTENSION_TO_PATH', type='bool', required=False, default=False, help='Prepend to path the extension of the output file')
     parser.add_argument('-d', metavar='DISPLAY_GRAPH', type='bool', required=False, default=False, help='Show graph')
     args = parser.parse_args()
 
@@ -45,15 +49,15 @@ if __name__ == "__main__":
     plt.minorticks_on()
 #     plt.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.3, alpha=0.7)
 #     plt.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.1, alpha=0.7)
-    majorLocator = tk.MultipleLocator(1.0)
-    minorLocator = tk.MultipleLocator(0.25)
-    ax.xaxis.set_major_locator(majorLocator)
-    ax.xaxis.set_minor_locator(minorLocator)
+#     majorLocator = tk.MultipleLocator(1.0)
+#     minorLocator = tk.MultipleLocator(0.25)
+#     ax.xaxis.set_major_locator(majorLocator)
+#     ax.xaxis.set_minor_locator(minorLocator)
 
-    x_min = 0
-    x_max = 0
-    y_min = 0
-    y_max = 0
+    x_min = sys.maxint
+    x_max = -sys.maxint
+    y_min = sys.maxint
+    y_max = -sys.maxint
 
     ##########################################################################
     # path plotting
@@ -113,10 +117,18 @@ if __name__ == "__main__":
     ##########################################################################
     # output
     if args.s:
-        plt.savefig('%s.svg' % args.o, bbox_inches='tight')
-        plt.savefig('%s.eps' % args.o, bbox_inches='tight')
-        plt.savefig('%s.pdf' % args.o, bbox_inches='tight')
-#         plt.savefig('%s.png' % args.o, bbox_inches='tight', dpi=1500)
+        if args.q:
+            output_path = ntpath.dirname(args.o)
+            output_file_name=ntpath.basename(args.o)
+            plt.savefig('%s/svg/%s.svgz' % (output_path, output_file_name), bbox_inches='tight')
+            plt.savefig('%s/eps/%s.eps' % (output_path, output_file_name), bbox_inches='tight')
+            plt.savefig('%s/pdf/%s.pdf' % (output_path, output_file_name), bbox_inches='tight')
+#            plt.savefig('%s/png/%s.png' % (output_path, output_file_name), dpi=1500, bbox_inches='tight')
+        else:
+            plt.savefig('%s.svgz' % args.o, bbox_inches='tight')
+            plt.savefig('%s.eps' % args.o, bbox_inches='tight')
+            plt.savefig('%s.pdf' % args.o, bbox_inches='tight')
+#            plt.savefig('%s.png' % args.o, dpi=1500, bbox_inches='tight')
 
     if args.d:
         plt.show()
