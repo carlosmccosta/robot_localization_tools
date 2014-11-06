@@ -18,6 +18,7 @@ def str2bool(v):
 
 
 
+
 if __name__ == "__main__":
     ##########################################################################
     # args
@@ -63,7 +64,7 @@ if __name__ == "__main__":
     # path plotting
     file_names = args.i.split('+')
     arrow_colors = args.c.split('+')
-    
+
     for idx, file in enumerate(file_names):
         arrow_positions_x = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.p,))
         arrow_positions_y = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.p + 1,))

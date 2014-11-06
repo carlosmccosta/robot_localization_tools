@@ -8,6 +8,7 @@
 
 import argparse
 import ntpath
+import sys
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -20,6 +21,7 @@ def str2bool(v):
 
 
 
+
 if __name__ == "__main__":
     ##########################################################################
     # args
@@ -27,14 +29,16 @@ if __name__ == "__main__":
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_FILE', type=str, required=True, help='CSV input file')
     parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
-    parser.add_argument('-b', metavar='BIN_WIDTH', type=float, required=False, default=-1, help='Histogram bin width. If < 0, it will use the number of bins specified with -n')
-    parser.add_argument('-n', metavar='NUMBER_OF_BINS', type=float, required=False, default=100, help='Number of bins to use (only used if -b is < 0)')
-    parser.add_argument('-w', metavar='PLOT_LINE_WIDTH', type=float, required=False, default=0.25, help='Plot line width')
-    parser.add_argument('-a', metavar='AXIS_TICKER_WIDTH', type=int, required=False, default=-1, help='How many bins fit in each x axis ticker. If < 0, it will let matplotlib choose automatically')
-    parser.add_argument('-c', metavar='FILE_COLUNM', type=int, required=False, default=1, help='CSV data column to use')
+    parser.add_argument('-c', metavar='FILE_COLUNM', type=int, required=False, default=0, help='CSV data column to use')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Probability distributions', help='Graph title')
     parser.add_argument('-x', metavar='GRAPH_X_AXIS_LABEL', type=str, required=False, default='Values', help='Graph x axis label')
-    parser.add_argument('-g', metavar='GRAPH_STD_DEV_VALUES', type=int, required=False, default=0,
+    parser.add_argument('-b', metavar='BIN_WIDTH', type=float, required=False, default=-1, help='Histogram bin width. If < 0, it will use the number of bins specified with -n')
+    parser.add_argument('-n', metavar='NUMBER_OF_BINS', type=float, required=False, default=100, help='Number of bins to use (only used if -b is < 0)')
+    parser.add_argument('-m', metavar='AXIS_MAX_LOCATOR_WIDTH', type=int, required=False, default=-1, help='Width for the major tick locator. If <= 0 lets matplotlib choose one')
+    parser.add_argument('-l', metavar='AXIS_MAX_LOCATOR_LINEAR', type=int, required=False, default=11, help='Divides the input range in -l major ticks. If <= 0 lets matplotlib choose one. Overrides -m')
+    parser.add_argument('-a', metavar='AXIS_MAX_LOCATOR_SUB_SIVISIONS', type=int, required=False, default=10, help='Number of major tick subdivisions for minor locator. If <= 0 lets matplotlib choose one')
+    parser.add_argument('-w', metavar='PLOT_LINE_WIDTH', type=float, required=False, default=0.25, help='Plot line width')
+    parser.add_argument('-g', metavar='GRAPH_STD_DEV_VALUES', type=int, required=False, default=4,
                         help='Show only values that are lower than -g standard deviations (from the mean of the fitted normal distribution). If 0, shows all values. Note: this doesnt affect the estimated distribution values (it only trims the displayed values)')
     parser.add_argument('-r', metavar='DISPLAY_POSITIVE_VALUES_ONLY', type='bool', required=False, default=False, help='Resets the display axis so that only positive values are shown')
     parser.add_argument('-s', metavar='SAVE_GRAPH', type='bool', required=False, default=True, help='Save graph to files using the name prefix specified with -o')
@@ -57,22 +61,17 @@ if __name__ == "__main__":
     bin_width = args.b
     x_min = np.min(data)
     x_max = np.max(data)
+
+    if args.n <= 0:
+        args.n = 100
+
     if args.b <= 0:
         bin_width = (x_max - x_min) / args.n
-    
-    x_min = int(x_min // bin_width)
-    x_max = int(np.ceil(x_max / bin_width))
-    
-    number_bins = np.max([x_max - x_min, 1])
-    
-    x_min *= bin_width
-    x_max *= bin_width
-    
-    n, bins, patches = plt.hist(data, number_bins, range=(x_min, x_max), normed=1, histtype='bar', facecolor='grey', linewidth=args.w, alpha=1.0)
-    ax.yaxis.set_major_formatter(tk.FuncFormatter(lambda v, pos: "{:4.2f}".format(v * bin_width) + ' | ' + "{:4.2f}".format(v)))
 
-    max_bin_count = 0
-    max_bin_count_x = 0
+    n, bins = np.histogram(data, args.n, range=(x_min, x_max), density=1)
+
+    max_bin_count = -sys.maxint
+    max_bin_count_x = -sys.maxint
     for idx, bin_count in enumerate(n):
         if bin_count > max_bin_count:
             max_bin_count = bin_count
@@ -86,12 +85,6 @@ if __name__ == "__main__":
     plt.minorticks_on()
     plt.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.30, alpha=0.5)
     plt.grid(b=True, which='minor', color='k', linestyle=':', linewidth=0.01, alpha=0.2)
-    
-    minorLocator = tk.MultipleLocator(bin_width)
-    ax.xaxis.set_minor_locator(minorLocator)
-    if args.a > 0:
-        majorLocator = tk.MultipleLocator(bin_width * args.a)
-        ax.xaxis.set_major_locator(majorLocator)
 
 
 
@@ -113,11 +106,11 @@ if __name__ == "__main__":
         par_est = distr.fit(data, loc=max_bin_count_x)
         loc_est = par_est[-2]
         scale_est = par_est[-1]
-        
+
         if idx == 0:
             normal_ditribution_mean = loc_est
             normal_ditribution_std_dev = scale_est
-        
+
         if args.f:
             output_str += ('\n  - Estimated parameters for %s distribution:' % distr.name)
             output_str += ('\n    -> Location: ' + str(loc_est))
@@ -141,20 +134,61 @@ if __name__ == "__main__":
             plot_label='$\mathrm{%s\ distribution:}\ location=%s,\ scale=%s,\ shape=%s$' % (distr_names[idx], str(loc_est), str(scale_est), str(par_est[0]))
         ax.plot(x_values, y_values, distr_colors[idx], linewidth=args.w, label=plot_label, alpha=0.75)
 
+
+
+    ##########################################################################
+    # graph plotting
+    if args.g > 0 and abs(normal_ditribution_std_dev) > 0:
+        x_min = np.max([normal_ditribution_mean - normal_ditribution_std_dev * args.g, x_min])
+        x_max = np.min([normal_ditribution_mean + normal_ditribution_std_dev * args.g, x_max])
+
+    if args.b <= 0:
+        bin_width = (x_max - x_min) / args.n
+
+    if args.b <= 0:
+        x_min_final = x_min
+        x_max_final = x_max
+        number_bins = args.n
+    else:
+        x_min_final = int(x_min // bin_width)
+        x_max_final = int(np.ceil(x_max / bin_width))
+        number_bins = np.max([x_max_final - x_min_final, 1])
+        x_min_final *= bin_width
+        x_max_final *= bin_width
+
     plt.axis('tight')
     axlim = list(plt.axis())
-    if args.g > 0 and abs(normal_ditribution_std_dev) > 0:
-        axlim[0] = (np.max([normal_ditribution_mean - normal_ditribution_std_dev * args.g, x_min]) // bin_width) * bin_width
-        axlim[1] = np.ceil(np.min([normal_ditribution_mean + normal_ditribution_std_dev * args.g, x_max]) / bin_width) * bin_width
+
+    axlim[0] = x_min_final
+    axlim[1] = x_max_final
+
     if args.r:
         axlim[0] = np.max([axlim[0], 0.0])
+
     if axlim[0] == axlim[1]:
         axlim[0] -= 1
         axlim[1] += 1
+
+    n, bins, patches = plt.hist(data, number_bins, range=(x_min_final, x_max_final), normed=1, histtype='bar', facecolor='grey', linewidth=args.w, alpha=1.0)
+    ax.yaxis.set_major_formatter(tk.FuncFormatter(lambda v, pos: "{:4.2f}".format(v * bin_width) + ' | ' + "{:4.2f}".format(v)))
+
+    if args.a > 0:
+        minorLocator = tk.AutoMinorLocator(args.a)
+        ax.xaxis.set_minor_locator(minorLocator)
+
+    if args.m > 0 and args.l <= 0:
+        majorLocator = tk.MultipleLocator(args.m)
+        ax.xaxis.set_major_locator(majorLocator)
+
+    if args.l > 0:
+        majorLocator = tk.LinearLocator(numticks=args.l)
+        ax.xaxis.set_major_locator(majorLocator)
+
+    axlim[3] = np.max(n) * 1.15
     if axlim[2] == axlim[3]:
         axlim[2] -= 1
         axlim[3] += 1
-    axlim[3] = max_bin_count * 1.15
+
     plt.axis(axlim)
 
     graph_legend = plt.legend(fancybox=True)

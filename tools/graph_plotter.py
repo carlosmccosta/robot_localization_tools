@@ -15,6 +15,7 @@ def str2bool(v):
 
 
 
+
 if __name__ == "__main__":
     ##########################################################################
     # args
@@ -60,6 +61,8 @@ if __name__ == "__main__":
     y_min = sys.maxint
     y_max = -sys.maxint
 
+
+
     ##########################################################################
     # graph plotting
     y_columns = args.y.split('+')
@@ -96,7 +99,7 @@ if __name__ == "__main__":
         axlim[2] -= 1
         axlim[3] += 1
     plt.axis(axlim)
-    
+
     graph_legend = plt.legend(fancybox=True, prop={'size':12})
     graph_legend.get_frame().set_alpha(0.75)
     plt.draw()
