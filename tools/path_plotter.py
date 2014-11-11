@@ -96,7 +96,7 @@ if __name__ == "__main__":
 #                     ha="left", va="center", rotation=rad2deg(asin(arrow_directions_y[i])), size=0.1,
 #                     bbox=dict(boxstyle="rarrow,pad=0.05", color=arrow_colors[idx], lw=0.05, alpha=0.2, width=0.1, mutation_scale=0.1, mutation_aspect=1.0))
 
-    plt.axis('tight')
+    plt.axis('scaled')
     axlim = list(plt.axis())
     diff_x = (x_max - x_min)
     diff_y = (y_max - y_min)
