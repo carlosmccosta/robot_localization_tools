@@ -27,7 +27,6 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseArray.h>
-#include <gazebo_msgs/GetLinkState.h>
 
 // external libs includes
 
@@ -63,6 +62,8 @@ class RobotLocalizationError {
 		void processPoseStamped(const geometry_msgs::PoseStampedConstPtr& pose);
 		void processPoseWithCovarianceStamped(const geometry_msgs::PoseWithCovarianceStampedConstPtr& pose);
 		bool getGroundTruthPose(const ros::Time& time_stamp, geometry_msgs::Pose& simulation_pose_out);
+		bool getOdometryPose(const ros::Time& time_stamp, geometry_msgs::Pose& odometry_pose_out);
+		void computeLocalizationError(const geometry_msgs::Pose& pose, const geometry_msgs::Pose& ground_truth, robot_localization_tools::LocalizationError& pose_errors_out);
 		void getRollPitchYaw(const geometry_msgs::Quaternion& orientation, tf2Scalar& roll, tf2Scalar& pitch, tf2Scalar& yaw);
 		void start();
 		void updateLocalizationError();
@@ -89,12 +90,14 @@ class RobotLocalizationError {
 		double publish_rate_;
 		bool invert_tf_from_map_ground_truth_frame_id_;
 		std::string map_ground_truth_frame_id_;
+		std::string map_odom_only_frame_id_;
 		std::string map_frame_id_;
 		std::string odom_frame_id_;
 		std::string base_link_frame_id_;
 		int pose_publishers_sampling_rate_;
 		ros::Duration tf_lookup_timeout_;
 		std::ofstream localization_poses_output_stream_;
+		std::ofstream odom_only_poses_output_stream_;
 		std::ofstream ground_truth_poses_output_stream_;
 		bool save_poses_timestamp_;
 		bool save_poses_orientation_quaternion_;
@@ -102,9 +105,9 @@ class RobotLocalizationError {
 
 
 		// state fields
-		gazebo_msgs::GetLinkState get_link_state_;
 		laserscan_to_pointcloud::TFCollector tf_collector_;
 		ros::Time last_update_time_;
+		geometry_msgs::PoseArray odom_only_poses_;
 		geometry_msgs::PoseArray localization_poses_;
 		geometry_msgs::PoseArray ground_truth_poses_;
 		int number_poses_received_since_last_publish_;
@@ -112,9 +115,10 @@ class RobotLocalizationError {
 		// ros communication fields
 		ros::Subscriber pose_subscriber_;
 		ros::Subscriber pose_with_covariance_subscriber_;
-		ros::ServiceClient gazebo_link_state_service_;
 		ros::Publisher pose_error_publisher_;
+		ros::Publisher pose_error_odometry_publisher_;
 		ros::Publisher localization_poses_publisher_;
+		ros::Publisher odom_only_poses_publisher_;
 		ros::Publisher ground_truth_poses_publisher_;
 	// ========================================================================   </private-section>  ==========================================================================
 };

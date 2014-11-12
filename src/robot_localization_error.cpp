@@ -35,12 +35,10 @@ RobotLocalizationError::~RobotLocalizationError() {}
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <LocalizationError-functions>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandlePtr& node_handle, ros::NodeHandlePtr& private_node_handle) {
 	// configuration fields
-	std::string gazebo_link_state_service_name;
-	private_node_handle->param("gazebo_link_state_service", gazebo_link_state_service_name, std::string("/gazebo/get_link_state"));
-	private_node_handle->param("gazebo_ground_truth_link", get_link_state_.request.link_name, std::string(""));
 	private_node_handle->param("invert_tf_from_map_ground_truth_frame_id", invert_tf_from_map_ground_truth_frame_id_, false);
 	private_node_handle->param("map_ground_truth_frame_id", map_ground_truth_frame_id_, std::string("map_ground_truth"));
 	private_node_handle->param("map_frame_id", map_frame_id_, std::string("map"));
+	private_node_handle->param("map_odom_only_frame_id", map_odom_only_frame_id_, std::string("map_odom_only"));
 	private_node_handle->param("odom_frame_id", odom_frame_id_, std::string("odom"));
 	private_node_handle->param("base_link_frame_id", base_link_frame_id_, std::string("base_footprint"));
 	private_node_handle->param("publish_rate", publish_rate_, 100.0);
@@ -52,8 +50,9 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("tf_lookup_timeout", tf_lookup_timeout, 0.1);
 	tf_lookup_timeout_.fromSec(tf_lookup_timeout);
 
-	std::string localization_poses_output_filename, ground_truth_poses_output_filename;
+	std::string localization_poses_output_filename, odom_only_poses_output_filename, ground_truth_poses_output_filename;
 	private_node_handle->param("localization_poses_output_filename", localization_poses_output_filename, std::string(""));
+	private_node_handle->param("odom_only_poses_output_filename", odom_only_poses_output_filename, std::string(""));
 	private_node_handle->param("ground_truth_poses_output_filename", ground_truth_poses_output_filename, std::string(""));
 	private_node_handle->param("save_poses_timestamp", save_poses_timestamp_, true);
 	private_node_handle->param("save_poses_orientation_quaternion", save_poses_orientation_quaternion_, true);
@@ -65,16 +64,16 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 		ROS_INFO_STREAM("Saving localization poses to file " << localization_poses_output_filename);
 	}
 
+	if (!odom_only_poses_output_filename.empty()) {
+		odom_only_poses_output_stream_.open(odom_only_poses_output_filename.c_str());
+		addPoseFileHeader(odom_only_poses_output_stream_, "# poses from odometry as localization system");
+		ROS_INFO_STREAM("Saving odometry poses associated with the localization poses to file " << odom_only_poses_output_filename);
+	}
+
 	if (!ground_truth_poses_output_filename.empty()) {
 		ground_truth_poses_output_stream_.open(ground_truth_poses_output_filename.c_str());
 		addPoseFileHeader(ground_truth_poses_output_stream_, "# poses from ground truth");
 		ROS_INFO_STREAM("Saving ground truth poses associated with the localization poses to file " << ground_truth_poses_output_filename);
-	}
-
-
-	if (map_ground_truth_frame_id_.empty() && !gazebo_link_state_service_name.empty() && !get_link_state_.request.link_name.empty()) {
-		ros::service::waitForService(gazebo_link_state_service_name);
-		gazebo_link_state_service_ = node_handle->serviceClient<gazebo_msgs::GetLinkState>(gazebo_link_state_service_name);
 	}
 
 	std::string pose_topic_name, pose_with_covariance_topic_name;
@@ -91,9 +90,17 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("pose_error_publish_topic", pose_error_publish_topic_name, std::string("localization_error"));
 	pose_error_publisher_ = node_handle->advertise<robot_localization_tools::LocalizationError>(pose_error_publish_topic_name, 10, true);
 
+	std::string pose_error_odometry_publish_topic_name;
+	private_node_handle->param("pose_error_odometry_publish_topic", pose_error_odometry_publish_topic_name, std::string("odometry_error"));
+	pose_error_odometry_publisher_ = node_handle->advertise<robot_localization_tools::LocalizationError>(pose_error_odometry_publish_topic_name, 10, true);
+
 	std::string localization_poses_publisher_topic;
 	private_node_handle->param("localization_poses_publisher_topic", localization_poses_publisher_topic, std::string("localization_poses"));
 	localization_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(localization_poses_publisher_topic, 10, true);
+
+	std::string odometry_poses_publisher_topic;
+	private_node_handle->param("odometry_poses_publisher_topic", odometry_poses_publisher_topic, std::string("odometry_poses"));
+	odom_only_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(odometry_poses_publisher_topic, 10, true);
 
 	std::string ground_truth_poses_publisher_topic;
 	private_node_handle->param("ground_truth_poses_publisher_topic", ground_truth_poses_publisher_topic, std::string("ground_truth_poses"));
@@ -107,56 +114,26 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStampedConstPtr& pose) {
 	if (pose->header.stamp < last_update_time_) return;
 	geometry_msgs::Pose ground_truth;
+	geometry_msgs::Pose localization_pose = pose->pose;
 
 	if (getGroundTruthPose(pose->header.stamp, ground_truth)) {
-		geometry_msgs::Pose localization_pose = pose->pose;
-
 		savePoseToFile(localization_poses_output_stream_, localization_pose, pose->header.stamp);
 		savePoseToFile(ground_truth_poses_output_stream_, ground_truth, pose->header.stamp);
 
 		robot_localization_tools::LocalizationError pose_errors;
 		pose_errors.header = pose->header;
 
+		computeLocalizationError(localization_pose, ground_truth, pose_errors);
 
-		// translation errors
-		pose_errors.translation_errors.x = ground_truth.position.x - localization_pose.position.x;
-		pose_errors.translation_errors.y = ground_truth.position.y - localization_pose.position.y;
-		pose_errors.translation_errors.z = ground_truth.position.z - localization_pose.position.z;
+		geometry_msgs::Pose odometry_pose;
+		if (getOdometryPose(pose->header.stamp, odometry_pose)) {
+			savePoseToFile(odom_only_poses_output_stream_, odometry_pose, pose->header.stamp);
 
-		if (use_millimeters_in_distances_) {
-			pose_errors.translation_errors.x *= 1000.0;
-			pose_errors.translation_errors.y *= 1000.0;
-			pose_errors.translation_errors.z *= 1000.0;
+			robot_localization_tools::LocalizationError odometry_errors;
+			odometry_errors.header = pose->header;
+			computeLocalizationError(odometry_pose, ground_truth, odometry_errors);
+			if (!pose_error_odometry_publisher_.getTopic().empty()) pose_error_odometry_publisher_.publish(odometry_errors);
 		}
-
-		pose_errors.translation_error = std::sqrt(
-				pose_errors.translation_errors.x * pose_errors.translation_errors.x +
-				pose_errors.translation_errors.y * pose_errors.translation_errors.y +
-				pose_errors.translation_errors.z * pose_errors.translation_errors.z);
-
-
-		// rotation errors
-		tf2::Quaternion pose_localization_q(pose->pose.orientation.x, pose->pose.orientation.y, pose->pose.orientation.z, pose->pose.orientation.w);
-		tf2::Quaternion pose_grund_truth_q(ground_truth.orientation.x, ground_truth.orientation.y, ground_truth.orientation.z, ground_truth.orientation.w);
-		tf2::Quaternion rotation_error_q = pose_grund_truth_q * pose_localization_q.inverse();
-		rotation_error_q.normalize();
-		tf2::Vector3 rotation_error_axis = rotation_error_q.getAxis();
-		pose_errors.rotation_error_angle = pose_grund_truth_q.angleShortestPath(pose_localization_q);
-//		pose_errors.rotation_error_angle = rotation_error_q.getAngleShortestPath();
-		pose_errors.rotation_error_axis.x = rotation_error_axis.getX();
-		pose_errors.rotation_error_axis.y = rotation_error_axis.getY();
-		pose_errors.rotation_error_axis.z = rotation_error_axis.getZ();
-
-		if (std::abs(rotation_error_q.getAngleShortestPath() - pose_errors.rotation_error_angle) > 0.025) {
-			pose_errors.rotation_error_axis.x *= -1;
-			pose_errors.rotation_error_axis.y *= -1;
-			pose_errors.rotation_error_axis.z *= -1;
-		}
-
-		if (use_degrees_in_angles_) {
-			pose_errors.rotation_error_angle = angles::to_degrees(pose_errors.rotation_error_angle);
-		}
-
 
 		if (!pose_error_publisher_.getTopic().empty()) pose_error_publisher_.publish(pose_errors);
 
@@ -165,6 +142,12 @@ void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStamped
 			if (!localization_poses_publisher_.getTopic().empty()) {
 				localization_poses_.header = pose->header;
 				localization_poses_publisher_.publish(localization_poses_);
+			}
+
+			odom_only_poses_.poses.push_back(odometry_pose);
+			if (!odom_only_poses_publisher_.getTopic().empty()) {
+				odom_only_poses_.header = pose->header;
+				odom_only_poses_publisher_.publish(odom_only_poses_);
 			}
 
 			ground_truth_poses_.poses.push_back(ground_truth);
@@ -192,33 +175,80 @@ void RobotLocalizationError::processPoseWithCovarianceStamped(const geometry_msg
 
 
 bool RobotLocalizationError::getGroundTruthPose(const ros::Time& time_stamp, geometry_msgs::Pose& ground_truth_pose_out) {
-	if (map_ground_truth_frame_id_.empty() && gazebo_link_state_service_.isValid()) {
-		gazebo_link_state_service_.call(get_link_state_);
-		if (get_link_state_.response.success) {
-			ground_truth_pose_out = get_link_state_.response.link_state.pose;
-			return true;
-		}
-	} else {
-		if (!odom_frame_id_.empty() && invert_tf_from_map_ground_truth_frame_id_) {
-			tf2::Transform localization_tf_odom_to_map;
-			if (tf_collector_.lookForTransform(localization_tf_odom_to_map, map_ground_truth_frame_id_, odom_frame_id_, time_stamp)) {
-				tf2::Transform localization_tf_base_to_odom;
-				if (tf_collector_.lookForTransform(localization_tf_base_to_odom, odom_frame_id_, base_link_frame_id_, time_stamp)) {
-					tf2::Transform localization_tf = localization_tf_odom_to_map.inverse() * localization_tf_base_to_odom;
-					laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, ground_truth_pose_out);
-					return true;
-				}
-			}
-		} else {
-			tf2::Transform localization_tf;
-			if (tf_collector_.lookForTransform(localization_tf, map_ground_truth_frame_id_, base_link_frame_id_, time_stamp)) {
+	if (!odom_frame_id_.empty() && invert_tf_from_map_ground_truth_frame_id_) {
+		tf2::Transform localization_tf_odom_to_map;
+		if (tf_collector_.lookForTransform(localization_tf_odom_to_map, map_ground_truth_frame_id_, odom_frame_id_, time_stamp)) {
+			tf2::Transform localization_tf_base_to_odom;
+			if (tf_collector_.lookForTransform(localization_tf_base_to_odom, odom_frame_id_, base_link_frame_id_, time_stamp)) {
+				tf2::Transform localization_tf = localization_tf_odom_to_map.inverse() * localization_tf_base_to_odom;
 				laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, ground_truth_pose_out);
 				return true;
 			}
 		}
+	} else {
+		tf2::Transform localization_tf;
+		if (tf_collector_.lookForTransform(localization_tf, map_ground_truth_frame_id_, base_link_frame_id_, time_stamp)) {
+			laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, ground_truth_pose_out);
+			return true;
+		}
 	}
 
 	return false;
+}
+
+
+bool RobotLocalizationError::getOdometryPose(const ros::Time& time_stamp, geometry_msgs::Pose& odometry_pose_out) {
+	tf2::Transform localization_odom_tf;
+	if (tf_collector_.lookForTransform(localization_odom_tf, map_odom_only_frame_id_, base_link_frame_id_, time_stamp)) {
+		laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_odom_tf, odometry_pose_out);
+		return true;
+	}
+
+	return false;
+}
+
+
+void RobotLocalizationError::computeLocalizationError(const geometry_msgs::Pose& pose, const geometry_msgs::Pose& ground_truth, robot_localization_tools::LocalizationError& pose_errors_out) {
+	// translation errors
+	pose_errors_out.translation_errors.x = ground_truth.position.x - pose.position.x;
+	pose_errors_out.translation_errors.y = ground_truth.position.y - pose.position.y;
+	pose_errors_out.translation_errors.z = ground_truth.position.z - pose.position.z;
+
+	if (use_millimeters_in_distances_) {
+		pose_errors_out.translation_errors.x *= 1000.0;
+		pose_errors_out.translation_errors.y *= 1000.0;
+		pose_errors_out.translation_errors.z *= 1000.0;
+	}
+
+	double translation_error_squred = pose_errors_out.translation_errors.x * pose_errors_out.translation_errors.x +
+			pose_errors_out.translation_errors.y * pose_errors_out.translation_errors.y +
+			pose_errors_out.translation_errors.z * pose_errors_out.translation_errors.z;
+	pose_errors_out.translation_error = std::sqrt(translation_error_squred);
+
+
+	// rotation errors
+	tf2::Quaternion pose_localization_q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+	pose_localization_q.normalize();
+	tf2::Quaternion pose_grund_truth_q(ground_truth.orientation.x, ground_truth.orientation.y, ground_truth.orientation.z, ground_truth.orientation.w);
+	pose_grund_truth_q.normalize();
+	tf2::Quaternion rotation_error_q = pose_grund_truth_q * pose_localization_q.inverse();
+	rotation_error_q.normalize();
+	tf2::Vector3 rotation_error_axis = rotation_error_q.getAxis();
+	pose_errors_out.rotation_error_angle = pose_grund_truth_q.angleShortestPath(pose_localization_q);
+	//		pose_errors.rotation_error_angle = rotation_error_q.getAngleShortestPath();
+	pose_errors_out.rotation_error_axis.x = rotation_error_axis.getX();
+	pose_errors_out.rotation_error_axis.y = rotation_error_axis.getY();
+	pose_errors_out.rotation_error_axis.z = rotation_error_axis.getZ();
+
+	if (std::abs(rotation_error_q.getAngleShortestPath() - pose_errors_out.rotation_error_angle) > 0.025) {
+		pose_errors_out.rotation_error_axis.x *= -1;
+		pose_errors_out.rotation_error_axis.y *= -1;
+		pose_errors_out.rotation_error_axis.z *= -1;
+	}
+
+	if (use_degrees_in_angles_) {
+		pose_errors_out.rotation_error_angle = angles::to_degrees(pose_errors_out.rotation_error_angle);
+	}
 }
 
 
@@ -243,6 +273,7 @@ void RobotLocalizationError::RobotLocalizationError::start() {
 	}
 
 	if (localization_poses_output_stream_.is_open()) { localization_poses_output_stream_.close(); }
+	if (odom_only_poses_output_stream_.is_open()) { odom_only_poses_output_stream_.close(); }
 	if (ground_truth_poses_output_stream_.is_open()) { ground_truth_poses_output_stream_.close(); }
 }
 
