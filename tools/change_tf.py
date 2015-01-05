@@ -9,6 +9,8 @@ import geometry_msgs.msg
 import os
 import sys
 import argparse
+import numpy
+from numpy import array
 
 
 def change_tf(inbag, outbag, source_frame, target_frame, new_source_frame, new_target_frame, invert_tf_matrix):
@@ -26,12 +28,22 @@ def change_tf(inbag, outbag, source_frame, target_frame, new_source_frame, new_t
                   transform_msg.child_frame_id = new_target_frame
                   
                   if invert_tf_matrix:
-                      transform_msg.transform.translation.x *= -1.0
-                      transform_msg.transform.translation.y *= -1.0
-                      transform_msg.transform.translation.z *= -1.0
-                      transform_msg.transform.rotation.x *= -1.0
-                      transform_msg.transform.rotation.y *= -1.0
-                      transform_msg.transform.rotation.z *= -1.0
+                      matrix_4x4 = tf.transformations.quaternion_matrix(numpy.array((transform_msg.transform.rotation.x, transform_msg.transform.rotation.y, transform_msg.transform.rotation.z, transform_msg.transform.rotation.w), dtype=numpy.float64))
+                      matrix_4x4[0,3] = transform_msg.transform.translation.x
+                      matrix_4x4[1,3] = transform_msg.transform.translation.y
+                      matrix_4x4[2,3] = transform_msg.transform.translation.z
+                      
+                      matrix_4x4_inverse = tf.transformations.inverse_matrix(matrix_4x4)
+                      quaternion_inverse = tf.transformations.quaternion_from_matrix(matrix_4x4_inverse)
+                      
+                      transform_msg.transform.translation.x = matrix_4x4_inverse[0,3]
+                      transform_msg.transform.translation.y = matrix_4x4_inverse[1,3]
+                      transform_msg.transform.translation.z = matrix_4x4_inverse[2,3]
+                      transform_msg.transform.rotation.x = quaternion_inverse[0]
+                      transform_msg.transform.rotation.y = quaternion_inverse[1]
+                      transform_msg.transform.rotation.z = quaternion_inverse[2]
+                      transform_msg.transform.rotation.w = quaternion_inverse[3]
+                      
       outbag.write(topic, msg, t)
   rospy.loginfo('Closing output bagfile and exit...')
   outbag.close();
