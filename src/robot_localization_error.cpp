@@ -19,6 +19,7 @@ namespace robot_localization_tools {
 RobotLocalizationError::RobotLocalizationError() :
 		use_degrees_in_angles_(false),
 		use_millimeters_in_distances_(false),
+		use_6_dof_(true),
 		publish_rate_(100.0),
 		invert_tf_from_map_ground_truth_frame_id_(false),
 		pose_publishers_sampling_rate_(10),
@@ -108,6 +109,7 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 
 	private_node_handle->param("use_degrees_in_angles", use_degrees_in_angles_, false);
 	private_node_handle->param("use_millimeters_in_distances", use_millimeters_in_distances_, false);
+	private_node_handle->param("use_6_dof", use_6_dof_, true);
 }
 
 
@@ -212,7 +214,7 @@ void RobotLocalizationError::computeLocalizationError(const geometry_msgs::Pose&
 	// translation errors
 	pose_errors_out.translation_errors.x = ground_truth.position.x - pose.position.x;
 	pose_errors_out.translation_errors.y = ground_truth.position.y - pose.position.y;
-	pose_errors_out.translation_errors.z = ground_truth.position.z - pose.position.z;
+	pose_errors_out.translation_errors.z = use_6_dof_ ? (ground_truth.position.z - pose.position.z) : 0;
 
 	if (use_millimeters_in_distances_) {
 		pose_errors_out.translation_errors.x *= 1000.0;

@@ -87,6 +87,7 @@ class RobotLocalizationError {
 		// configurations fields
 		bool use_degrees_in_angles_; // false -> radians
 		bool use_millimeters_in_distances_; // false -> meters
+		bool use_6_dof_;
 		double publish_rate_;
 		bool invert_tf_from_map_ground_truth_frame_id_;
 		std::string map_ground_truth_frame_id_;
