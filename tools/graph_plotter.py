@@ -23,9 +23,15 @@ if __name__ == "__main__":
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_FILE', type=str, required=True, help='CSV input file name')
     parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
-    parser.add_argument('-x', metavar='FILE_X_COLUNM', type=int, required=False, default=0, help='CSV data column with the x data')
-    parser.add_argument('-y', metavar='FILE_Y_COLUNMS', type=str, required=False, default=1, help='CSV data columns separated with + with the y data')
+    parser.add_argument('-x', metavar='FILE_X_COLUNM', type=str, required=False, default=0, help='CSV data column with the x data for each file split by -')
+    parser.add_argument('-y', metavar='FILE_Y_COLUNMS', type=str, required=False, default=1, help='CSV data columns with the y data separated with + within file and split by - for each file')
+    parser.add_argument('-z', metavar='FILE_VALUE_DELIMITER', type=str, required=False, default=',', help='Value delimiter in each line')
+    parser.add_argument('-e', metavar='FILE_N_SKIP_ROWS', type=int, required=False, default=1, help='Number of rows to skip when reading files')
     parser.add_argument('-w', metavar='PLOT_LINE_WIDTH', type=float, required=False, default=0.5, help='Plot line width')
+    parser.add_argument('-u', metavar='PLOT_LINE_STYLE', type=str, required=False, default='-', help='Plot line style')
+    parser.add_argument('-a', metavar='PLOT_LINE_STYLE_ALPHA', type=float, required=False, default=0.75, help='Plot line alpha')
+    parser.add_argument('-j', metavar='PLOT_LINE_MARKER', type=str, required=False, default='.', help='Plot line marker')
+    parser.add_argument('-k', metavar='PLOT_LINE_MARKER_SIZE_WIDTH_MULTIPLIER', type=float, required=False, default=3, help='Plot line marker size will be PLOT_LINE_WIDTH * PLOT_LINE_MARKER_SIZE_WIDTH_MULTIPLIER')
     parser.add_argument('-m', metavar='X_AXIS_SCALE', type=float, required=False, default=0.000000001, help='X axis scale')
     parser.add_argument('-n', metavar='Y_AXIS_SCALE', type=float, required=False, default=1, help='Y axis scale')
     parser.add_argument('-b', metavar='X_AXIS_LABEL', type=str, required=False, default='X', help='X axis label')
@@ -65,24 +71,39 @@ if __name__ == "__main__":
 
     ##########################################################################
     # graph plotting
-    y_columns = args.y.split('+')
+    file_names = args.i.split('+')
+    x_columns = args.x.split('-')
+    y_columns_per_file = args.y.split('-')
     y_colors = args.c.split('+')
     y_labels = args.l.split('+')
 
-    for idx, y_column in enumerate(y_columns):
-        x_values = np.loadtxt(args.i, dtype=float, delimiter=',', skiprows=1, usecols=(args.x,)) * args.m
+    current_column = 0
+    for idx_file, file in enumerate(file_names):
+        x_values = np.loadtxt(file_names[0], dtype=float, delimiter=args.z, skiprows=args.e, usecols=(int(x_columns[idx_file]),))
+        x_values_sorted_indexs = np.argsort(x_values)
+        x_values = x_values[x_values_sorted_indexs]
+        
+        if args.m != 1:
+            x_values *= args.m
         if args.r:
             x_values -= np.min(x_values)
-        y_values = np.loadtxt(args.i, dtype=float, delimiter=',', skiprows=1, usecols=(int(y_column),))
-        if args.n != 1:
-            y_values *= args.n
-
-        x_min = np.min([np.min(x_values), x_min])
-        x_max = np.max([np.max(x_values), x_max])
-        y_min = np.min([np.min(y_values), y_min])
-        y_max = np.max([np.max(y_values), y_max])
         
-        plt.plot(x_values, y_values, y_colors[idx], linewidth=args.w, label=y_labels[idx], alpha=0.75)
+        y_columns = y_columns_per_file[idx_file].split('+')
+        for idx_colomn, y_column in enumerate(y_columns):
+            y_values = np.loadtxt(file, dtype=float, delimiter=args.z, skiprows=args.e, usecols=(int(y_column),))
+            y_values = y_values[x_values_sorted_indexs]
+            
+            if args.n != 1:
+                y_values *= args.n
+
+            x_min = np.min([np.min(x_values), x_min])
+            x_max = np.max([np.max(x_values), x_max])
+            y_min = np.min([np.min(y_values), y_min])
+            y_max = np.max([np.max(y_values), y_max])
+
+            plt.plot(x_values, y_values, y_colors[current_column], linewidth=args.w, label=y_labels[current_column], alpha=args.a, linestyle=args.u, marker=args.j, markersize=args.w * args.k)
+            current_column += 1
+
 
     plt.axis('tight')
     axlim = list(plt.axis())
