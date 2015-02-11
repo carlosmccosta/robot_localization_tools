@@ -114,7 +114,12 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 
 
 void RobotLocalizationError::processPoseStamped(const geometry_msgs::PoseStampedConstPtr& pose) {
-	if (pose->header.stamp < last_update_time_) return;
+	if (pose->header.stamp < last_update_time_) {
+		ros::Duration time_offset = last_update_time_ - pose->header.stamp;
+		ROS_WARN_STREAM("RobotLocalizationError discarded new pose because it's timestamp (" << pose->header.stamp << ") is " << time_offset.toSec() << " seconds older than an already processed pose");
+		return;
+	}
+
 	geometry_msgs::Pose ground_truth;
 	geometry_msgs::Pose localization_pose = pose->pose;
 
@@ -229,24 +234,15 @@ void RobotLocalizationError::computeLocalizationError(const geometry_msgs::Pose&
 
 
 	// rotation errors
-	tf2::Quaternion pose_localization_q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
-	pose_localization_q.normalize();
-	tf2::Quaternion pose_grund_truth_q(ground_truth.orientation.x, ground_truth.orientation.y, ground_truth.orientation.z, ground_truth.orientation.w);
-	pose_grund_truth_q.normalize();
-	tf2::Quaternion rotation_error_q = pose_grund_truth_q * pose_localization_q.inverse();
-	rotation_error_q.normalize();
-	tf2::Vector3 rotation_error_axis = rotation_error_q.getAxis();
-	pose_errors_out.rotation_error_angle = pose_grund_truth_q.angleShortestPath(pose_localization_q);
-	//		pose_errors.rotation_error_angle = rotation_error_q.getAngleShortestPath();
+	tf2::Quaternion pose_localization_q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w); pose_localization_q.normalize();
+	tf2::Quaternion pose_grund_truth_q(ground_truth.orientation.x, ground_truth.orientation.y, ground_truth.orientation.z, ground_truth.orientation.w); pose_grund_truth_q.normalize();
+	tf2::Quaternion rotation_error_q = pose_grund_truth_q * pose_localization_q.inverse(); rotation_error_q.normalize();
+	if (rotation_error_q.getW() < 0) { rotation_error_q *= -1.0; } // shortest path angle
+	tf2::Vector3 rotation_error_axis = rotation_error_q.getAxis().normalize();
+	pose_errors_out.rotation_error_angle = rotation_error_q.getAngle();
 	pose_errors_out.rotation_error_axis.x = rotation_error_axis.getX();
 	pose_errors_out.rotation_error_axis.y = rotation_error_axis.getY();
 	pose_errors_out.rotation_error_axis.z = rotation_error_axis.getZ();
-
-	if (std::abs(rotation_error_q.getAngleShortestPath() - pose_errors_out.rotation_error_angle) > 0.025) {
-		pose_errors_out.rotation_error_axis.x *= -1;
-		pose_errors_out.rotation_error_axis.y *= -1;
-		pose_errors_out.rotation_error_axis.z *= -1;
-	}
 
 	if (use_degrees_in_angles_) {
 		pose_errors_out.rotation_error_angle = angles::to_degrees(pose_errors_out.rotation_error_angle);
@@ -296,7 +292,7 @@ void RobotLocalizationError::updateLocalizationError() {
 
 bool RobotLocalizationError::savePoseToFile(std::ofstream& output_stream, geometry_msgs::Pose& pose, ros::Time timestamp) {
 	if (output_stream.is_open()) {
-		if (save_poses_timestamp_) { output_stream << timestamp.sec << "." << timestamp.nsec << " "; }
+		if (save_poses_timestamp_) { output_stream << timestamp << " "; }
 		output_stream << pose.position.x << " " <<pose.position.y << " " << pose.position.z;
 		if (save_poses_orientation_quaternion_) { output_stream << " " << pose.orientation.x << " " << pose.orientation.y << " " << pose.orientation.z << " " << pose.orientation.w; }
 		if (save_poses_orientation_vector_) {
