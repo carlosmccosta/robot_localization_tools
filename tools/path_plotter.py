@@ -28,7 +28,11 @@ if __name__ == "__main__":
     parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
     parser.add_argument('-p', metavar='FILE_POSITION_START_COLUNM', type=int, required=False, default=0, help='CSV data column where the arrows position starts')
     parser.add_argument('-v', metavar='FILE_VECTOR_START_COLUNM', type=int, required=False, default=2, help='CSV data column where the arrows vector starts')
-    parser.add_argument('-a', metavar='ARROW_SCALE', type=float, required=False, default=0.0025, help='Arrow scale')
+    parser.add_argument('-a', metavar='ARROW_SCALE', type=float, required=False, default=0.005, help='Arrow scale')
+    parser.add_argument('-w', metavar='ARROW_WIDTH', type=float, required=False, default=0.002, help='Arrow width')
+    parser.add_argument('-l', metavar='ARROW_LINE_WIDTH', type=float, required=False, default=0.002, help='Arrow line width')
+    parser.add_argument('-y', metavar='ARROW_HEAD_WIDTH', type=float, required=False, default=0.004, help='Arrow head width')
+    parser.add_argument('-u', metavar='ARROW_HEAD_LENGTH', type=float, required=False, default=0.003, help='Arrow head length')
     parser.add_argument('-c', metavar='ARROWS_COLORS', type=str, required=False, default='g+b', help='Arrows colors for each file (separated by + in hex format #rrggbb)')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Paths', help='Graph title')
     parser.add_argument('-s', metavar='SAVE_GRAPH', type='bool', required=False, default=True, help='Save graphs to files using the name prefix specified with -o')
@@ -83,7 +87,7 @@ if __name__ == "__main__":
 #             print arrow_positions_x[i], arrow_positions_y[i], arrow_directions_x[i], arrow_directions_y[i]
 
             ax.arrow(arrow_positions_x[i], arrow_positions_y[i], arrow_directions_x[i] * args.a, arrow_directions_y[i] * args.a,
-                     shape='full', width=0.0002, linewidth=0.0002, length_includes_head=True, head_width=0.0006, head_length=0.001, color=arrow_colors[idx], alpha=0.5)
+                     shape='full', width=args.w, linewidth=args.l, length_includes_head=True, head_width=args.y, head_length=args.u, color=arrow_colors[idx], alpha=0.5)
 
 #             ax.annotate(str(i), fontsize=0.1,
 #                         xy=(arrow_positions_x[i] + arrow_directions_x[i] * args.a, arrow_positions_y[i] + arrow_directions_y[i] * args.a),
