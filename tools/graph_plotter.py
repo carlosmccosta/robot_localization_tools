@@ -45,6 +45,8 @@ if __name__ == "__main__":
     parser.add_argument('-q', metavar='ADD_FILE_EXTENSION_TO_PATH', type='bool', required=False, default=False, help='Prepend to path the extension of the output file')
     parser.add_argument('-d', metavar='DISPLAY_GRAPH', type='bool', required=False, default=False, help='Show graph')
     args = parser.parse_args()
+    if args.z == 'sp':
+        args.z = ' '
 
 
 

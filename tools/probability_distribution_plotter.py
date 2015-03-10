@@ -32,8 +32,10 @@ if __name__ == "__main__":
     parser.add_argument('-c', metavar='FILE_COLUNM', type=int, required=False, default=0, help='CSV data column to use')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Probability distributions', help='Graph title')
     parser.add_argument('-x', metavar='GRAPH_X_AXIS_LABEL', type=str, required=False, default='Values', help='Graph x axis label')
+    parser.add_argument('-z', metavar='FILE_VALUE_DELIMITER', type=str, required=False, default=',', help='Value delimiter in each line')
     parser.add_argument('-b', metavar='BIN_WIDTH', type=float, required=False, default=-1, help='Histogram bin width. If < 0, it will use the number of bins specified with -n')
     parser.add_argument('-n', metavar='NUMBER_OF_BINS', type=float, required=False, default=100, help='Number of bins to use (only used if -b is < 0)')
+    parser.add_argument('-e', metavar='VALUES_SCALE', type=float, required=False, default=1, help='X axis scale')
     parser.add_argument('-m', metavar='AXIS_MAX_LOCATOR_WIDTH', type=int, required=False, default=-1, help='Width for the major tick locator. If <= 0 lets matplotlib choose one')
     parser.add_argument('-l', metavar='AXIS_MAX_LOCATOR_LINEAR', type=int, required=False, default=11, help='Divides the input range in -l major ticks. If <= 0 lets matplotlib choose one. Overrides -m')
     parser.add_argument('-a', metavar='AXIS_MAX_LOCATOR_SUB_SIVISIONS', type=int, required=False, default=10, help='Number of major tick subdivisions for minor locator. If <= 0 lets matplotlib choose one')
@@ -46,13 +48,15 @@ if __name__ == "__main__":
     parser.add_argument('-d', metavar='DISPLAY_GRAPH', type='bool', required=False, default=False, help='Show graph')
     parser.add_argument('-f', metavar='FORMATED_OUTPUT', type='bool', required=False, default=True, help='Console output in readable format or in csv style (if False)')
     args = parser.parse_args()
-
+    if args.z == 'sp':
+        args.z = ' '
 
 
     ##########################################################################
     # input
-    data = np.loadtxt(args.i, dtype=float, delimiter=',', skiprows=1, usecols=(args.c,))
-
+    data = np.loadtxt(args.i, dtype=float, delimiter=args.z, skiprows=1, usecols=(args.c,))
+    if args.e != 1:
+            data *= args.e
 
 
     ##########################################################################
