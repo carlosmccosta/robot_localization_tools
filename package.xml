@@ -26,5 +26,6 @@
 	<run_depend>message_generation</run_depend>
 	<run_depend>message_runtime</run_depend>
 	<run_depend>collectl</run_depend>
+	<run_depend>linux-tools</run_depend>
 	<run_depend>python-matplotlib</run_depend>
 </package>
