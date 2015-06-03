@@ -6,8 +6,10 @@ ROS package with several tools useful to evaluate a localization system.
 It has tools to:
 - [Retrieve the localization error of a robot using the ROS TF](launch/robot_localization_error.launch)
 - [Extract csv data from rosbags](tools/bag2csv.sh)
+- [Add TF frames](tools/add_tf.py)
 - [Edit TF frames](tools/change_tf.py)
 - [Remove TF frames](tools/remove_tf.py)
+- [Edit CameraInfo messages](tools/change_camera_info.py)
 - [Publish geometry_msgs::Twist from yaml files (allows a robot to follow a predefined path in Gazebo)](launch/twist_publisher.launch).
 
 It also has tools to create graphs in vector graphics formats (pdf, eps, svgz) using [matplotlib](http://matplotlib.org/):
