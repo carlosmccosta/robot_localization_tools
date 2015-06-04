@@ -37,7 +37,7 @@ def change_camera_info(inbag_filename, outbag_filename, new_camera_info, camera_
         else:
             outbag.write(topic, msg, t)
 
-    rospy.loginfo('Closing output bagfile and exiting...')
+    print 'Closing output bagfile %s and exit...' % (outbag_filename)
     inbag.close()
     outbag.close()
 

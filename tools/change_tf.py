@@ -6,8 +6,6 @@ import rospy
 import rosbag
 import tf
 import geometry_msgs.msg
-import os
-import sys
 import argparse
 import numpy
 from numpy import array
@@ -24,16 +22,16 @@ def change_tf(inbag_filename, outbag_filename, source_frame, target_frame, new_s
     print 'Writing to output bagfile: %s' % (outbag_filename)
     print '             Changing tfs: [%s -> %s] [%s -> %s]' % (source_frame, target_frame, new_source_frame, new_target_frame)
     print '      Inverting tf matrix: %s' % (invert_tf_matrix)
-    
+
     if change_position:
         print '             New position: [x: %f, y: %f, z: %f]' % (new_position[0], new_position[1], new_position[2])
-    
+
     if change_orientation:
         print '             New rotation: [x: %f, y: %f, z: %f, w: %f]' % (new_rotation[0], new_rotation[1], new_rotation[2], new_rotation[3])
-    
+
     inbag = rosbag.Bag(inbag_filename,'r')
     outbag = rosbag.Bag(outbag_filename, 'w', rosbag.bag.Compression.BZ2)
-    
+
     for topic, msg, t in inbag.read_messages():
         if topic == '/tf' or topic == '/tf_static':
             for transform_msg in msg.transforms:
@@ -71,9 +69,9 @@ def change_tf(inbag_filename, outbag_filename, source_frame, target_frame, new_s
 
         outbag.write(topic, msg, t)
 
-    rospy.loginfo('Closing output bagfile and exit...')
+    print 'Closing output bagfile %s and exit...' % (outbag_filename)
     inbag.close()
-    outbag.close();
+    outbag.close()
 
 
 if __name__ == "__main__":

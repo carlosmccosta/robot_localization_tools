@@ -34,7 +34,7 @@ def add_tf(inbag_filename, source_frame, target_frame, position, rotation, time_
         append_bag.write("/tf", transform_msg, time)
         time += rospy.Duration(time_increment)
 
-    rospy.loginfo('Closing bagfile and exit...')
+    print 'Closing output bagfile %s and exit...' % (inbag_filename)
     append_bag.close()
 
 

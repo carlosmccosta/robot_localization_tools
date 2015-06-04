@@ -4,18 +4,18 @@
 import roslib
 import rospy
 import rosbag
-import os
-import sys
 import argparse
 
-def remove_tf(inbag, outbag, source_frame_ids, target_frame_ids):
-    print '   Processing input bagfile: %s' % (inbag)
-    print '  Writing to output bagfile: %s' % (outbag)
+
+
+def remove_tf(inbag_filename, outbag_filename, source_frame_ids, target_frame_ids):
+    print '   Processing input bagfile: %s' % (inbag_filename)
+    print '  Writing to output bagfile: %s' % (outbag_filename)
     print '  Removing source_frame_ids: %s' % (' '.join(source_frame_ids))
     print '  Removing target_frame_ids: %s' % (' '.join(target_frame_ids))
-    
-    outbag = rosbag.Bag(outbag, 'w', rosbag.bag.Compression.BZ2)
-    for topic, msg, t in rosbag.Bag(inbag, 'r').read_messages():
+
+    outbag = rosbag.Bag(outbag_filename, 'w', rosbag.bag.Compression.BZ2)
+    for topic, msg, t in rosbag.Bag(inbag_filename, 'r').read_messages():
         if topic == "/tf" or topic == '/tf_static':
             new_transforms = []
             for transform in msg.transforms:
@@ -23,8 +23,9 @@ def remove_tf(inbag, outbag, source_frame_ids, target_frame_ids):
                     new_transforms.append(transform)
             msg.transforms = new_transforms
         outbag.write(topic, msg, t)
-    rospy.loginfo('Closing output bagfile and exit...')
-    outbag.close();
+
+    print 'Closing output bagfile %s and exit...' % (outbag_filename)
+    outbag.close()
 
 
 
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', metavar='SOURCE_FRAME_IDS', required=True, help='source frame_id(s) of the transforms to remove from the /tf topic', nargs='+')
     parser.add_argument('-t', metavar='TARGET_FRAME_IDS', required=True, help='target frame_id(s) of the transforms to remove from the /tf topic', nargs='+')
     args = parser.parse_args()
-    
+
     try:
       remove_tf(args.i, args.o, args.s, args.t)
     except Exception, e:
