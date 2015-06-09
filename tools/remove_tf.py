@@ -30,7 +30,7 @@ def remove_tf(inbag_filename, outbag_filename, source_frame_ids, target_frame_id
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='removes all transforms from the /tf topic that contain one of the given frame_ids in the header as parent or child.')
+    parser = argparse.ArgumentParser(description='Script to remove tfs that contain one of the given frame_ids in the header as parent or child')
     parser.add_argument('-i', metavar='INPUT_BAGFILE', required=True, help='input bagfile')
     parser.add_argument('-o', metavar='OUTPUT_BAGFILE', required=True, help='output bagfile')
     parser.add_argument('-s', metavar='SOURCE_FRAME_IDS', required=True, help='source frame_id(s) of the transforms to remove from the /tf topic', nargs='+')

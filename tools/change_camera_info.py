@@ -44,7 +44,7 @@ def change_camera_info(inbag_filename, outbag_filename, new_camera_info, camera_
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Tool to change the sensor_msgs/CameraInfo calibration data')
+    parser = argparse.ArgumentParser(description='Script to change the sensor_msgs/CameraInfo calibration data')
     parser.add_argument('-i', metavar='INPUT_BAGFILE', required=True, help='Input bag filename')
     parser.add_argument('-o', metavar='OUTPUT_BAGFILE', required=True, help='Output bag filename')
     parser.add_argument('-c', metavar='NEW_CAMERA_INFO_YAML', required=True, help='New camera info yaml calibration')

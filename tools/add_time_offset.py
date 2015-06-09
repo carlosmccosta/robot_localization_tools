@@ -45,7 +45,7 @@ def add_time_offset(inbag_filename, outbag_filename, time_offset, topics, use_re
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Changes tf frame_ids with the option to invert the tf matrix')
+    parser = argparse.ArgumentParser(description='Script to add offsets to messages headers time and replace recorded time with header time')
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_BAGFILE', required=True, help='Input bagfile')
     parser.add_argument('-o', metavar='OUTPUT_BAGFILE', required=True, help='Output bagfile')

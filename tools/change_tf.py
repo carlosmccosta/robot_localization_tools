@@ -75,7 +75,7 @@ def change_tf(inbag_filename, outbag_filename, source_frame, target_frame, new_s
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Changes tf frame_ids with the option to invert the tf matrix')
+    parser = argparse.ArgumentParser(description='Script to change tf frame_ids with the option to invert the tf matrix')
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_BAGFILE', required=True, help='Input bagfile')
     parser.add_argument('-o', metavar='OUTPUT_BAGFILE', required=True, help='Output bagfile')
