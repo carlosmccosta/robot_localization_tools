@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 process_name=${1:?'Must specify process to monitor'}
 output_filename_perf=${2:-'~/'}

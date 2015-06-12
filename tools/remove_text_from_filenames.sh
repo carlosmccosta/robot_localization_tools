@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 delimiter=${1:?'Must specify the marker until text will be removed'}
 directory=${2:-'~/'}

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 results_directory=${1:?'Must specify directory where the hw_resources_usage_log.prc file is and in which the results will be saved'}
 file_name=${2:-'results_hw_resources_usage_log.prc'}
