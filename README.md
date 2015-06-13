@@ -5,7 +5,7 @@ ROS package with several tools useful to evaluate a localization system.
 
 It has tools to:
 - [Retrieve the localization error of a robot using the ROS TF](launch/robot_localization_error.launch)
-- [Extract csv data from rosbags](tools/bag2csv.sh)
+- [Extract csv data from rosbags](tools/bag2csv.bash)
 - [Add TF frames](tools/add_tf.py)
 - [Edit TF frames](tools/change_tf.py)
 - [Remove TF frames](tools/remove_tf.py)
@@ -18,5 +18,5 @@ It also has tools to create graphs in vector graphics formats (pdf, eps, svgz) u
 - [Plot robot velocity and acceleration graphs from pose files (with Savitzky-Golay filtering)](tools/path_velocity_and_acceleration_plotter.py)
 - [Fit probability distributions (normal distribution, lognormal distribution, generalized extreme value distribution) to csv data](tools/probability_distribution_plotter.py)
 - [Save process CPU and memory consumptions to file](tools/process_monitor.sh)
-- [Plot graphs for CPU and memory consumptions of processes](tools/generate_process_monitor_graphs.sh)
+- [Plot graphs for CPU and memory consumptions of processes](tools/generate_process_monitor_graphs.bash)
 
