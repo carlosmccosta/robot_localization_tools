@@ -7,25 +7,60 @@
 	<license>BSD</license>
 	<author email="carloscosta.cmcc@gmail.com">Carlos Miguel Correia da Costa</author>
 
+
 	<buildtool_depend>catkin</buildtool_depend>
-	<build_depend>roscpp</build_depend>
-	<build_depend>tf2</build_depend>
+
+	<!-- ################################################################## -->
+	<!-- Build dependencies -->
+	<!-- ################################################################## -->
+
+	<!-- developed ros packages -->
+	<build_depend>laserscan_to_pointcloud</build_depend> <!-- https://github.com/carlosmccosta/laserscan_to_pointcloud -->
+
+	<!-- other ros packages -->
 	<build_depend>angles</build_depend>	
-	<build_depend>std_msgs</build_depend>
 	<build_depend>geometry_msgs</build_depend>
-	<build_depend>rosconsole</build_depend>
-	<build_depend>laserscan_to_pointcloud</build_depend>
 	<build_depend>message_generation</build_depend>
-	<run_depend>roscpp</run_depend>
-	<run_depend>tf2</run_depend>
-	<run_depend>angles</run_depend>	
-	<run_depend>std_msgs</run_depend>
-	<run_depend>geometry_msgs</run_depend>
-	<run_depend>rosconsole</run_depend>
+	<build_depend>roscpp</build_depend>
+	<build_depend>rosconsole</build_depend>
+	<build_depend>std_msgs</build_depend>
+	<build_depend>tf2</build_depend>
+
+
+	<!-- ################################################################## -->
+	<!-- Run dependencies -->
+	<!-- ################################################################## -->
+
+	<!-- developed ros packages -->
 	<run_depend>laserscan_to_pointcloud</run_depend>
+
+	<!-- other ros packages -->
+	<run_depend>angles</run_depend>
+	<run_depend>geometry_msgs</run_depend>	
 	<run_depend>message_generation</run_depend>
-	<run_depend>message_runtime</run_depend>
+	<run_depend>message_runtime</run_depend>	
+	<run_depend>roscpp</run_depend>
+	<run_depend>rosconsole</run_depend>
+	<run_depend>std_msgs</run_depend>
+	<run_depend>tf2</run_depend>
+
+	<!-- other ros packages (run only) -->
+	<run_depend>rospy</run_depend>
+	<run_depend>rosbag</run_depend>
+	<run_depend>roslib</run_depend>
+	<run_depend>sensor_msgs</run_depend>
+	<run_depend>tf</run_depend>
+	<run_depend>tf2_msgs</run_depend>
+	<run_depend></run_depend>
+
+	<!-- system dependencies -->
 	<run_depend>collectl</run_depend>
+	<run_depend>coreutils</run_depend>
 	<run_depend>linux-tools</run_depend>
 	<run_depend>python-matplotlib</run_depend>
+	<run_depend>python-numpy</run_depend>
+	<run_depend>python-scipy</run_depend>
+	<run_depend>python-yaml</run_depend>
+	<run_depend>quaternion</run_depend> <!-- https://github.com/moble/quaternion -->
+
 </package>
