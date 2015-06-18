@@ -8,14 +8,16 @@ project(robot_localization_tools)
 #######################################################################################################################
 
 set(${PROJECT_NAME}_CATKIN_COMPONENTS 
-    roscpp
-    tf2
     angles
-    std_msgs
     geometry_msgs
-    rosconsole
     laserscan_to_pointcloud
     message_generation
+    rosconsole
+    roscpp
+    rospy
+    sensor_msgs
+    std_msgs
+    tf2
 )
 
 find_package(catkin REQUIRED COMPONENTS ${${PROJECT_NAME}_CATKIN_COMPONENTS})
@@ -34,8 +36,9 @@ add_message_files(
 
 generate_messages(
    DEPENDENCIES
-   std_msgs
    geometry_msgs
+   sensor_msgs
+   std_msgs
 )
 
 

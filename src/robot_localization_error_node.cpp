@@ -1,4 +1,4 @@
-/**\file laserscan_to_pointcloud_node.cpp
+/**\file robot_localization_error_node.cpp
  * \brief Description...
  *
  * @version 1.0

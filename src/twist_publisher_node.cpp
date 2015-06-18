@@ -1,4 +1,4 @@
-/**\file laserscan_to_pointcloud_node.cpp
+/**\file twist_publisher_node.cpp
  * \brief Description...
  *
  * @version 1.0

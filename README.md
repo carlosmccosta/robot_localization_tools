@@ -11,6 +11,7 @@ It has tools to:
 - [Remove TF frames](tools/remove_tf.py)
 - [Edit CameraInfo messages](tools/change_camera_info.py)
 - [Publish geometry_msgs::Twist from yaml files (allows a robot to follow a predefined path in Gazebo)](launch/twist_publisher.launch).
+- [Monitor ros topics and execute a system command when no msgs are received during a given period.](scripts/topic_supervisor.py)
 
 It also has tools to create graphs in vector graphics formats (pdf, eps, svgz) using [matplotlib](http://matplotlib.org/):
 - [Plot graphs from csv files](tools/graph_plotter.py)
