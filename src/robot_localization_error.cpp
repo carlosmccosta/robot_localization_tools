@@ -107,6 +107,10 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("ground_truth_poses_publisher_topic", ground_truth_poses_publisher_topic, std::string("ground_truth_poses"));
 	ground_truth_poses_publisher_ = node_handle->advertise<geometry_msgs::PoseArray>(ground_truth_poses_publisher_topic, 10, true);
 
+	std::string clear_poses_service_name;
+	private_node_handle->param("clear_poses_service_name", clear_poses_service_name, std::string("robot_localization_error/clear_poses"));
+	clear_poses_service_ = node_handle->advertiseService(clear_poses_service_name, &robot_localization_tools::RobotLocalizationError::clearPoses, this);
+
 	private_node_handle->param("use_degrees_in_angles", use_degrees_in_angles_, false);
 	private_node_handle->param("use_millimeters_in_distances", use_millimeters_in_distances_, false);
 	private_node_handle->param("use_6_dof", use_6_dof_, true);
@@ -323,6 +327,15 @@ bool RobotLocalizationError::addPoseFileHeader(std::ofstream& output_stream, std
 	}
 
 	return false;
+}
+
+
+bool RobotLocalizationError::clearPoses(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
+	localization_poses_.poses.clear();
+	odom_only_poses_.poses.clear();
+	ground_truth_poses_.poses.clear();
+
+	return true;
 }
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </LocalizationError-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 // =============================================================================  </public-section>  ===========================================================================

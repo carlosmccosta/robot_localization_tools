@@ -17,6 +17,7 @@ set(${PROJECT_NAME}_CATKIN_COMPONENTS
     rospy
     sensor_msgs
     std_msgs
+    std_srvs
     tf2
 )
 

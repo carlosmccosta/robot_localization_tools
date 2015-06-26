@@ -27,6 +27,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseArray.h>
+#include <std_srvs/Empty.h>
 
 // external libs includes
 
@@ -69,6 +70,7 @@ class RobotLocalizationError {
 		void updateLocalizationError();
 		bool savePoseToFile(std::ofstream& output_stream, geometry_msgs::Pose& pose, ros::Time timestamp);
 		bool addPoseFileHeader(std::ofstream& output_stream, std::string first_line);
+		bool clearPoses(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   </LocalizationError-functions>  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   <gets>   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -114,6 +116,7 @@ class RobotLocalizationError {
 		int number_poses_received_since_last_publish_;
 
 		// ros communication fields
+		ros::ServiceServer clear_poses_service_;
 		ros::Subscriber pose_subscriber_;
 		ros::Subscriber pose_with_covariance_subscriber_;
 		ros::Publisher pose_error_publisher_;
