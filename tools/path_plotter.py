@@ -26,8 +26,10 @@ if __name__ == "__main__":
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_FILES', type=str, required=True, help='CSV input file paths separated by +')
     parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
-    parser.add_argument('-p', metavar='FILE_POSITION_START_COLUNM', type=int, required=False, default=0, help='CSV data column where the arrows position starts')
-    parser.add_argument('-v', metavar='FILE_VECTOR_START_COLUNM', type=int, required=False, default=2, help='CSV data column where the arrows vector starts')
+    parser.add_argument('-p', metavar='FILE_POSITION_X_AXIS_COLUNM', type=int, required=False, default=0, help='CSV data column where the arrows x axis position starts')
+    parser.add_argument('-e', metavar='FILE_POSITION_Y_AXIS_COLUNM', type=int, required=False, default=1, help='CSV data column where the arrows y axis position starts (offset in relation to x)')
+    parser.add_argument('-v', metavar='FILE_VECTOR_X_AXIS_COLUNM', type=int, required=False, default=2, help='CSV data column where the arrows x axis vector starts')
+    parser.add_argument('-r', metavar='FILE_VECTOR_X_AXIS_COLUNM', type=int, required=False, default=1, help='CSV data column where the arrows y axis vector starts (offset in relation to x)')
     parser.add_argument('-a', metavar='ARROW_SCALE', type=float, required=False, default=0.005, help='Arrow scale')
     parser.add_argument('-w', metavar='ARROW_WIDTH', type=float, required=False, default=0.002, help='Arrow width')
     parser.add_argument('-l', metavar='ARROW_LINE_WIDTH', type=float, required=False, default=0.002, help='Arrow line width')
@@ -35,6 +37,8 @@ if __name__ == "__main__":
     parser.add_argument('-u', metavar='ARROW_HEAD_LENGTH', type=float, required=False, default=0.003, help='Arrow head length')
     parser.add_argument('-c', metavar='ARROWS_COLORS', type=str, required=False, default='g+b', help='Arrows colors for each file (separated by + in hex format #rrggbb)')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Paths', help='Graph title')
+    parser.add_argument('-b', metavar='X_AXIS_LABEL', type=str, required=False, default='x position (meters)', help='X axis label')
+    parser.add_argument('-m', metavar='Y_AXIS_LABEL', type=str, required=False, default='y position (meters)', help='Y axis label')
     parser.add_argument('-s', metavar='SAVE_GRAPH', type='bool', required=False, default=True, help='Save graphs to files using the name prefix specified with -o')
     parser.add_argument('-q', metavar='ADD_FILE_EXTENSION_TO_PATH', type='bool', required=False, default=False, help='Prepend to path the extension of the output file')
     parser.add_argument('-d', metavar='DISPLAY_GRAPH', type='bool', required=False, default=False, help='Show graph')
@@ -46,8 +50,8 @@ if __name__ == "__main__":
     # graph setup
     fig, ax = plt.subplots(figsize=(19.2, 10.8), dpi=100)
 
-    plt.xlabel('x position (meters)')
-    plt.ylabel('y position (meters)')
+    plt.xlabel(args.b)
+    plt.ylabel(args.m)
     graph_title = plt.title(args.t, fontsize=16)
     graph_title.set_y(1.01)
 
@@ -71,9 +75,9 @@ if __name__ == "__main__":
 
     for idx, file in enumerate(file_names):
         arrow_positions_x = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.p,))
-        arrow_positions_y = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.p + 1,))
+        arrow_positions_y = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.p + args.e,))
         arrow_directions_x = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.v,))
-        arrow_directions_y = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.v + 1,))
+        arrow_directions_y = np.loadtxt(file, dtype=float, delimiter=' ', skiprows=2, usecols=(args.v + args.r,))
         number_arrows = min(len(arrow_positions_x), len(arrow_positions_y), len(arrow_directions_x), len(arrow_directions_y))
 
         x_min = np.min([np.min(arrow_positions_x), x_min])
