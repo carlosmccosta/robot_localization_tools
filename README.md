@@ -15,7 +15,8 @@ It has tools to:
 
 It also has tools to create graphs in vector graphics formats (pdf, eps, svgz) using [matplotlib](http://matplotlib.org/):
 - [Plot graphs from csv files](tools/graph_plotter.py)
-- [Plot robot paths from pose files](tools/path_plotter.py)
+- [Plot 2D robot paths from pose files](tools/path_plotter.py)
+- [Plot 3D robot paths from pose files](tools/path_plotter_3d.py)
 - [Plot robot velocity and acceleration graphs from pose files (with Savitzky-Golay filtering)](tools/path_velocity_and_acceleration_plotter.py)
 - [Fit probability distributions (normal distribution, lognormal distribution, generalized extreme value distribution) to csv data](tools/probability_distribution_plotter.py)
 - [Save process CPU and memory consumptions to file](tools/process_monitor.sh)
