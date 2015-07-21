@@ -18,6 +18,34 @@ def str2bool(v):
   return v.lower() in ("yes", "true", "t", "1")
 
 
+
+def set_axes_equal(ax):
+    '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
+    cubes as cubes, etc..  This is one possible solution to Matplotlib's
+    ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
+
+    Input
+      ax: a matplotlib axis, e.g., as output from plt.gca().
+    '''
+
+    x_limits = ax.get_xlim3d()
+    y_limits = ax.get_ylim3d()
+    z_limits = ax.get_zlim3d()
+
+    x_range = x_limits[1] - x_limits[0]; x_mean = np.mean(x_limits)
+    y_range = y_limits[1] - y_limits[0]; y_mean = np.mean(y_limits)
+    z_range = z_limits[1] - z_limits[0]; z_mean = np.mean(z_limits)
+
+    # The plot bounding box is a sphere in the sense of the infinity
+    # norm, hence I call half the max range the plot radius.
+    plot_radius = 0.5*max([x_range, y_range, z_range])
+
+    ax.set_xlim3d([x_mean - plot_radius, x_mean + plot_radius])
+    ax.set_ylim3d([y_mean - plot_radius, y_mean + plot_radius])
+    ax.set_zlim3d([z_mean - plot_radius, z_mean + plot_radius])
+
+
+
 if __name__ == "__main__":
     ##########################################################################
     # args
@@ -27,10 +55,11 @@ if __name__ == "__main__":
     parser.add_argument('-o', metavar='OUTPUT_FILE_NAME', type=str, required=False, default='results', help='Output file name (exports in svg, eps and pdf)')
     parser.add_argument('-p', metavar='FILE_POSITION_X_AXIS_COLUNM', type=int, required=False, default=0, help='CSV data column where the arrows x axis position starts')
     parser.add_argument('-v', metavar='FILE_VECTOR_X_AXIS_COLUNM', type=int, required=False, default=2, help='CSV data column where the arrows x axis vector starts')
-    parser.add_argument('-a', metavar='ARROW_SCALE', type=float, required=False, default=0.005, help='Arrow scale')
-    parser.add_argument('-r', metavar='ARROW_HEAD_RATION', type=float, required=False, default=0.3, help='Arrow head ratio')
-    parser.add_argument('-l', metavar='ARROW_LINE_WIDTH', type=float, required=False, default=0.05, help='Arrow line width')
+    parser.add_argument('-a', metavar='ARROW_SCALE', type=float, required=False, default=0.0125, help='Arrow scale')
+    parser.add_argument('-r', metavar='ARROW_HEAD_RATIO', type=float, required=False, default=0.5, help='Arrow head ratio')
+    parser.add_argument('-l', metavar='ARROW_LINE_WIDTH', type=float, required=False, default=0.75, help='Arrow line width')
     parser.add_argument('-c', metavar='ARROWS_COLORS', type=str, required=False, default='g+b', help='Arrows colors for each file (separated by + in hex format #rrggbb)')
+    parser.add_argument('-j', metavar='MARGIN_DIFF_PERCENTAGE', type=float, required=False, default=0.025, help='Margin percentage around data')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Paths', help='Graph title')
     parser.add_argument('-b', metavar='X_AXIS_LABEL', type=str, required=False, default='x position (meters)', help='X axis label')
     parser.add_argument('-m', metavar='Y_AXIS_LABEL', type=str, required=False, default='y position (meters)', help='Y axis label')
@@ -46,7 +75,6 @@ if __name__ == "__main__":
     # graph setup
     fig = plt.figure(figsize=(19.2, 10.8), dpi=100)
     ax = fig.add_subplot(111, projection='3d')
-    ax.set_aspect("equal")
 
     ax.set_xlabel(args.b)
     ax.set_ylabel(args.m)
@@ -56,6 +84,13 @@ if __name__ == "__main__":
         graph_title.set_y(1.01)
 
     plt.minorticks_on()
+    
+    x_min = sys.maxint
+    x_max = -sys.maxint
+    y_min = sys.maxint
+    y_max = -sys.maxint
+    z_min = sys.maxint
+    z_max = -sys.maxint
 
 
     ##########################################################################
@@ -74,10 +109,47 @@ if __name__ == "__main__":
 
         print "Plotting path for file", file, "with", number_arrows, "poses"
 
+        x_min = np.min([np.min(arrow_positions_x), x_min])
+        x_max = np.max([np.max(arrow_positions_x), x_max])
+        y_min = np.min([np.min(arrow_positions_y), y_min])
+        y_max = np.max([np.max(arrow_positions_y), y_max])
+        z_min = np.min([np.min(arrow_positions_z), z_min])
+        z_max = np.max([np.max(arrow_positions_z), z_max])
+
         for i in range(0, number_arrows):
             ax.quiver(arrow_positions_x[i], arrow_positions_y[i], arrow_positions_z[i], arrow_directions_x[i], arrow_directions_y[i], arrow_directions_z[i],
                       length=args.a, arrow_length_ratio=args.r, lw=args.l, color=arrow_colors[idx], alpha=0.5)
 
+
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.axis('scaled')
+
+    diff_x = (x_max - x_min)
+    diff_y = (y_max - y_min)
+    diff_z = (z_max - z_min)
+    plot_radius = (np.max([diff_x, diff_y, diff_z]) * (1.0 + args.j)) * 0.5
+
+#     ax.set_xlim3d([x_min - diff_x * args.j, x_max + diff_x * args.j])
+#     ax.set_ylim3d([y_min - diff_y * args.j, y_max + diff_y * args.j])
+#     ax.set_zlim3d([z_min - diff_z * args.j, z_max + diff_z * args.j])
+
+#     ax.auto_scale_xyz([x_min - diff_x * args.j, x_max + diff_x * args.j],
+#                       [y_min - diff_y * args.j, y_max + diff_y * args.j],
+#                       [z_min - diff_z * args.j, z_max + diff_z * args.j])
+
+    x_mean = x_min + diff_x * 0.5
+    y_mean = y_min + diff_y * 0.5
+    z_mean = z_min + diff_z * 0.5
+    ax.set_xlim3d([x_mean - plot_radius, x_mean + plot_radius])
+    ax.set_ylim3d([y_mean - plot_radius, y_mean + plot_radius])
+    ax.set_zlim3d([z_mean - plot_radius, z_mean + plot_radius])
+
+#     set_axes_equal(ax)
+
+    print "Limits: [%f, %f] [%f, %f] [%f, %f] | Plot radius: %f" % (x_min, x_max, y_min, y_max, z_min, z_max, plot_radius)
+
+#     ax.pbaspect=[1,1,1]
+#     ax.localPbAspect=[1,1,1]
     plt.tight_layout()
     plt.draw()
 

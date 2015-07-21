@@ -36,6 +36,7 @@ if __name__ == "__main__":
     parser.add_argument('-y', metavar='ARROW_HEAD_WIDTH', type=float, required=False, default=0.004, help='Arrow head width')
     parser.add_argument('-u', metavar='ARROW_HEAD_LENGTH', type=float, required=False, default=0.003, help='Arrow head length')
     parser.add_argument('-c', metavar='ARROWS_COLORS', type=str, required=False, default='g+b', help='Arrows colors for each file (separated by + in hex format #rrggbb)')
+    parser.add_argument('-j', metavar='MARGIN_DIFF_PERCENTAGE', type=float, required=False, default=0.025, help='Margin percentage around data')
     parser.add_argument('-t', metavar='GRAPH_TITLE', type=str, required=False, default='Paths', help='Graph title')
     parser.add_argument('-b', metavar='X_AXIS_LABEL', type=str, required=False, default='x position (meters)', help='X axis label')
     parser.add_argument('-m', metavar='Y_AXIS_LABEL', type=str, required=False, default='y position (meters)', help='Y axis label')
@@ -108,10 +109,10 @@ if __name__ == "__main__":
     axlim = list(plt.axis())
     diff_x = (x_max - x_min)
     diff_y = (y_max - y_min)
-    axlim[0] = x_min - diff_x * 0.025
-    axlim[1] = x_max + diff_x * 0.025
-    axlim[2] = y_min - diff_y * 0.025
-    axlim[3] = y_max + diff_y * 0.025
+    axlim[0] = x_min - diff_x * args.j
+    axlim[1] = x_max + diff_x * args.j
+    axlim[2] = y_min - diff_y * args.j
+    axlim[3] = y_max + diff_y * args.j
     if axlim[0] == axlim[1]:
         axlim[0] = -1
         axlim[1] = 1
