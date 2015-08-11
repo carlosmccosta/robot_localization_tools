@@ -13,6 +13,7 @@
 // std includes
 #include <string>
 #include <vector>
+#include <algorithm>
 
 // ROS includes
 #include <ros/ros.h>

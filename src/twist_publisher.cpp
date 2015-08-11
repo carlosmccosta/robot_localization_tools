@@ -26,6 +26,8 @@ void TwistPublisher::setupConfigurationFromParameterServer(ros::NodeHandlePtr& n
 }
 
 void TwistPublisher::publishTwistFromParameterServer(ros::NodeHandlePtr& private_node_handle) {
+	double publish_rate;
+	private_node_handle->param("TwistPublisher/publish_rate", publish_rate, -1.0);
 	XmlRpc::XmlRpcValue twist_msgs_yaml;
 	if (private_node_handle->getParam("TwistPublisher/Messages", twist_msgs_yaml)) {
 		geometry_msgs::Twist twist_msg;
@@ -33,10 +35,20 @@ void TwistPublisher::publishTwistFromParameterServer(ros::NodeHandlePtr& private
 		for (int twist_msg_config = 0; twist_msg_config < twist_msgs_yaml.size(); ++twist_msg_config) {
 			twist_msg.linear.x = twist_msgs_yaml[twist_msg_config].hasMember("linear.x") ? (double)twist_msgs_yaml[twist_msg_config]["linear.x"] : 0.0;
 			twist_msg.angular.z = twist_msgs_yaml[twist_msg_config].hasMember("angular.z") ? (double)twist_msgs_yaml[twist_msg_config]["angular.z"] : 0.0;
-			twist_publisher_.publish(twist_msg);
 
 			ros::Duration twist_duration(twist_msgs_yaml[twist_msg_config].hasMember("duration") ? (double)twist_msgs_yaml[twist_msg_config]["duration"] : 0.0);
-			twist_duration.sleep();
+
+			int number_of_messages_to_publish = 1;
+
+			if (publish_rate > 0.0) {
+				number_of_messages_to_publish = std::max(1, (int)(publish_rate * twist_duration.toSec()));
+				twist_duration.fromSec(twist_duration.toSec() / number_of_messages_to_publish);
+			}
+
+			for (int i = 0; i < number_of_messages_to_publish; ++i) {
+				twist_publisher_.publish(twist_msg);
+				twist_duration.sleep();
+			}
 		}
 	}
 }
