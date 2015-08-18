@@ -37,7 +37,7 @@ def change_camera_info(inbag_filename, outbag_filename, new_camera_info, camera_
         else:
             outbag.write(topic, msg, t)
 
-    print 'Closing output bagfile %s and exit...' % (outbag_filename)
+    print 'Closing output bagfile %s' % (outbag_filename)
     inbag.close()
     outbag.close()
 

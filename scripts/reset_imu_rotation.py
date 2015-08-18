@@ -49,7 +49,13 @@ def print_reset_coversion(original_quaternion, new_quaternion):
     print ' Reset orientation [qx: %f, qy: %f, qz: %f, qw: %f] -> [qx: %f, qy: %f, qz: %f, qw: %f] | [y: %f, p: %f, r: %f] -> [y: %f, p: %f, r: %f]' % (original_quaternion[0], original_quaternion[1], original_quaternion[2], original_quaternion[3], new_quaternion[0], new_quaternion[1], new_quaternion[2], new_quaternion[3], original_yaw, original_pitch, original_roll, new_yaw, new_pitch, new_roll)
 
 
-def reset_imu_rotation(inbag_filename, outbag_filename, imu_topic, pose_topic, reset_config, print_verbose_info):
+def compute_quaternion_euler_offset(original_quaternion, new_quaternion):
+    offset_quaternion = transformations.quaternion_multiply(transformations.quaternion_inverse(new_quaternion), original_quaternion)
+    yaw, pitch, roll = transformations.euler_from_quaternion(offset_quaternion, axes='szyx')
+    return (abs(yaw) + abs(pitch) + abs(roll))
+
+
+def reset_rotation(inbag_filename, outbag_filename, imu_topic, pose_topic, reset_config, euler_angle_offset_to_discard_initial_inconsistent_msgs, reset_rotation_msgs_initial_window, print_verbose_info):
     print ' Resetting IMU orientation in topic %s within bag %s' % (imu_topic, inbag_filename)
     print ' Resetting PoseStamped orientation in topic %s within bag %s' % (pose_topic, inbag_filename)
 
@@ -59,16 +65,25 @@ def reset_imu_rotation(inbag_filename, outbag_filename, imu_topic, pose_topic, r
     reset_quaternion_imu_valid = False
     reset_quaternion_pose_valid = False
 
+    number_imu_msgs_reset = 0
+    number_pose_msgs_reset = 0
+
     for topic, msg, t in inbag.read_messages():
         if topic == imu_topic:
             current_quaternion = [msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w]
             if not reset_quaternion_imu_valid:
+                quaternion_imu = current_quaternion
                 reset_quaternion_imu = transformations.quaternion_inverse(current_quaternion)
                 if reset_config:
                     reset_quaternion_imu = reset_quaternion(reset_quaternion_imu, reset_config)
                 reset_quaternion_imu_valid = True
                 print_reset_quaternion(reset_quaternion_imu, ' Resetting IMU messages\t\t')
-
+            
+            if number_imu_msgs_reset < reset_rotation_msgs_initial_window:
+                euler_offset = compute_quaternion_euler_offset(quaternion_imu, current_quaternion)
+                if euler_offset > euler_angle_offset_to_discard_initial_inconsistent_msgs:
+                    print '  Discarded inconsistent reset imu msg (nº %i with offset %f)' % (number_imu_msgs_reset, euler_offset)
+                    reset_quaternion_imu_valid = False
 
             new_quaternion = transformations.quaternion_multiply(reset_quaternion_imu, current_quaternion)
             msg.orientation.x = new_quaternion[0]
@@ -79,14 +94,23 @@ def reset_imu_rotation(inbag_filename, outbag_filename, imu_topic, pose_topic, r
             if print_verbose_info:
                 print_reset_coversion(current_quaternion, new_quaternion)
 
+            number_imu_msgs_reset += 1
+
         if topic == pose_topic:
             current_quaternion = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
             if not reset_quaternion_pose_valid:
+                quaternion_pose = current_quaternion
                 reset_quaternion_pose = transformations.quaternion_inverse(current_quaternion)
                 if reset_config:
                     reset_quaternion_pose = reset_quaternion(reset_quaternion_pose, reset_config)
                 reset_quaternion_pose_valid = True
                 print_reset_quaternion(reset_quaternion_pose, ' Resetting PoseStamped messages\t')
+
+            if number_pose_msgs_reset < reset_rotation_msgs_initial_window:
+                euler_offset = compute_quaternion_euler_offset(quaternion_pose, current_quaternion)
+                if euler_offset > euler_angle_offset_to_discard_initial_inconsistent_msgs:
+                    print '  Discarded inconsistent reset pose msg (nº %i with offset %f)' % (number_pose_msgs_reset, euler_offset)
+                    reset_quaternion_pose_valid = False
 
             new_quaternion = transformations.quaternion_multiply(reset_quaternion_pose, current_quaternion)
             msg.pose.orientation.x = new_quaternion[0]
@@ -97,9 +121,11 @@ def reset_imu_rotation(inbag_filename, outbag_filename, imu_topic, pose_topic, r
             if print_verbose_info:
                 print_reset_coversion(current_quaternion, new_quaternion)
 
+            number_pose_msgs_reset += 1
+
         outbag.write(topic, msg, t)
 
-    print 'Closing output bagfile %s and exit...' % (outbag_filename)
+    print 'Closing output bagfile %s' % (outbag_filename)
     inbag.close()
     outbag.close()
 
@@ -112,11 +138,13 @@ if __name__ == "__main__":
     parser.add_argument('-t', metavar='TOPIC_IMU', required=True, help='Topic to reset IMU rotation')
     parser.add_argument('-p', metavar='TOPIC_POSE', required=True, help='Topic to reset PoseStamped rotation')
     parser.add_argument('-r', metavar='RESET_CONFIG', required=False, default='', help='Reset config (string with rpy to reset each / combined fixed euler angles)')
+    parser.add_argument('-s', type=float, required=False, default=0.17, help='Euler angle offset to discard initial inconsistent msgs')
+    parser.add_argument('-w', type=int, required=False, default=3, help='Reset rotation msgs initial window')
     parser.add_argument('-v', metavar='PRINT_VERBOSE_INFO', type='bool', required=False, default=False, help='Print verbose convertion info')
     args = parser.parse_args()
 
     try:
-      reset_imu_rotation(args.i, args.o, args.t, args.p, args.r, args.v)
+      reset_rotation(args.i, args.o, args.t, args.p, args.r, args.s, args.w, args.v)
       exit(0)
     except Exception, e:
       import traceback
