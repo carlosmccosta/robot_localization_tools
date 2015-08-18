@@ -15,16 +15,28 @@ def remove_tf(inbag_filename, outbag_filename, source_frame_ids, target_frame_id
     print '  Removing target_frame_ids: %s' % (' '.join(target_frame_ids))
 
     outbag = rosbag.Bag(outbag_filename, 'w', rosbag.bag.Compression.BZ2)
+    number_checked_msgs = 0
+    number_removed_msgs = 0
     for topic, msg, t in rosbag.Bag(inbag_filename, 'r').read_messages():
+        write_msg = True
         if topic == "/tf" or topic == '/tf_static':
             new_transforms = []
             for transform in msg.transforms:
                 if not (transform.header.frame_id in source_frame_ids and transform.child_frame_id in target_frame_ids):
                     new_transforms.append(transform)
-            msg.transforms = new_transforms
-        outbag.write(topic, msg, t)
+            number_checked_msgs += 1
+            if new_transforms:
+                msg.transforms = new_transforms
+            else:
+                write_msg = False
+                number_removed_msgs += 1
 
-    print 'Closing output bagfile %s and exit...' % (outbag_filename)
+        if write_msg:
+            outbag.write(topic, msg, t)
+
+    print 'Checked %i TF messages' % (number_checked_msgs)
+    print 'Removed %i TF messages' % (number_removed_msgs)
+    print 'Closing output bagfile %s' % (outbag_filename)
     outbag.close()
 
 

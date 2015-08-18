@@ -39,7 +39,7 @@ def add_time_offset(inbag_filename, outbag_filename, time_offset, topics, use_re
             outbag.write(topic, msg, msg.header.stamp if msg._has_header else t)
 
 
-    print 'Closing output bagfile %s and exit...' % (outbag_filename)
+    print 'Closing output bagfile %s' % (outbag_filename)
     inbag.close()
     outbag.close()
 

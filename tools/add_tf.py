@@ -30,19 +30,22 @@ def add_tf(inbag_filename, source_frame, target_frame, position, rotation, time_
 
     append_bag = rosbag.Bag(inbag_filename, 'a')
     time = rospy.Time(append_bag.get_start_time())
+    end_time = rospy.Time(append_bag.get_end_time())
+    transform_msg.transforms[0].header.stamp = time
+    time_increment_duration = rospy.Duration(time_increment)
     
     print '            Time interval: [%f] -> [%f]' % (append_bag.get_start_time(), append_bag.get_end_time())
     
     number_messages_added = 0
-    while time.to_sec() < append_bag.get_end_time():
+    while time.to_sec() < end_time.to_sec():
+        append_bag.write("/tf", transform_msg, time)
+        time += time_increment_duration
         transform_msg.transforms[0].header.stamp = time
         transform_msg.transforms[0].header.seq += 1
-        append_bag.write("/tf", transform_msg, time)
-        time += rospy.Duration(time_increment)
         number_messages_added += 1
 
     print 'Added %i TF messages' % (number_messages_added)
-    print 'Closing output bagfile %s and exit...' % (inbag_filename)
+    print 'Closing output bagfile %s' % (inbag_filename)
     append_bag.close()
 
 
@@ -58,7 +61,7 @@ if __name__ == "__main__":
     parser.add_argument('-x', type=float, required=False, default=0.0, help='x rotation')
     parser.add_argument('-y', type=float, required=False, default=0.0, help='y rotation')
     parser.add_argument('-z', type=float, required=False, default=0.0, help='z rotation')
-    parser.add_argument('-w', type=float, required=False, default=0.0, help='w rotation')
+    parser.add_argument('-w', type=float, required=False, default=1.0, help='w rotation')
     args = parser.parse_args()
 
     try:

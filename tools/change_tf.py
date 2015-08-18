@@ -69,7 +69,7 @@ def change_tf(inbag_filename, outbag_filename, source_frame, target_frame, new_s
 
         outbag.write(topic, msg, t)
 
-    print 'Closing output bagfile %s and exit...' % (outbag_filename)
+    print 'Closing output bagfile %s' % (outbag_filename)
     inbag.close()
     outbag.close()
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     parser.add_argument('-x', type=float, required=False, default=0.0, help='New x rotation')
     parser.add_argument('-y', type=float, required=False, default=0.0, help='New y rotation')
     parser.add_argument('-z', type=float, required=False, default=0.0, help='New z rotation')
-    parser.add_argument('-w', type=float, required=False, default=0.0, help='New w rotation')
+    parser.add_argument('-w', type=float, required=False, default=1.0, help='New w rotation')
     args = parser.parse_args()
 
     try:
