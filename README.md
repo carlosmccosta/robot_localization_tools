@@ -13,6 +13,7 @@ Rosbag tools:
 - [Add TF transforms to rosbags](scripts/add_tf.py)
 - [Edit TF transforms in rosbags](scripts/change_tf.py)
 - [Remove TF transforms from rosbags](scripts/remove_tf.py)
+- [Remove headers frame_ids leading slash from rosbags](scripts/remove_frame_ids_leading_slash.py)
 - [Add time offset to messages in rosbags and replace the record time with the header time](scripts/add_time_offset.py)
 - [Edit CameraInfo messages in rosbags](scripts/change_camera_info.py)
 - [Reset IMU rotation in rosbags](scripts/reset_imu_rotation.py)

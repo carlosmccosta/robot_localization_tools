@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.register('type', 'bool', str2bool)
     parser.add_argument('-i', metavar='INPUT_BAGFILE', required=True, help='Input bagfile')
     parser.add_argument('-o', metavar='OUTPUT_BAGFILE', required=True, help='Output bagfile')
-    parser.add_argument('-s', metavar='TIME_OFFSET', type=float, required=True, help='Time offset')
+    parser.add_argument('-s', metavar='TIME_OFFSET', type=float, required=True, help='Time offset in seconds')
     parser.add_argument('-t', metavar='TOPICS', required=True, help='Topics to add time offset', nargs='+')
     parser.add_argument('-r', type='bool', required=False, default=True, help='Use recorded stamp (false uses header stamp)')
     args = parser.parse_args()
