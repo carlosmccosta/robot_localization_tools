@@ -27,6 +27,7 @@ def add_time_offset(inbag_filename, outbag_filename, time_offset, topics, use_re
     number_of_replaced_headers = 0
 
     for topic, msg, t in inbag.read_messages():
+        recorded_time_with_offset = t + duration_offset
         if topics == ['all'] or topic in topics:
             if (topic == "/tf" or topic == "/tf_static") and msg.transforms:
                 for transform in msg.transforms:
@@ -36,11 +37,11 @@ def add_time_offset(inbag_filename, outbag_filename, time_offset, topics, use_re
 
         if use_recorded_time or (msg._has_header and msg.header.stamp.secs == 0 and msg.header.stamp.nsecs == 0):
             if msg._has_header and replace_zero_time:
-                msg.header.stamp = t
+                msg.header.stamp = recorded_time_with_offset
                 number_of_replaced_headers += 1
-            outbag.write(topic, msg, t)
+            outbag.write(topic, msg, recorded_time_with_offset)
         else:
-            outbag.write(topic, msg, msg.header.stamp if msg._has_header else t)
+            outbag.write(topic, msg, msg.header.stamp if msg._has_header else recorded_time_with_offset)
 
     if replace_zero_time:
         print '%i headers with 0 time were replaced with recorded time' % (number_of_replaced_headers)
