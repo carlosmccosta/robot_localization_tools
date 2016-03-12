@@ -35,3 +35,4 @@ Tools to monitor and plot CPU and memory consumptions:
 Other tools:
 - [Publish geometry_msgs::Twist from yaml files (allows a robot to follow a predefined path in Gazebo)](launch/twist_publisher.launch).
 - [Monitor ros topics and execute a system command when no msgs are received during a given period.](scripts/topic_supervisor.py)
+- [Create ROS 2D maps from CAD models.](tools/build_ros_maps_from_cad_models)

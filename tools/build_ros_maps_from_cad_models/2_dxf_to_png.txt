@@ -1,0 +1,17 @@
+- Open .dxf in Inkscape (https://inkscape.org)
+- Scale drawing to match the desired map resolution
+	- Select all objects (Edit -> Select all)
+	- Object -> Transform -> Scale
+		- Input the map width and height (in pixels, keeping the aspect ratio)
+- Edit document properties to match the desired map resolution
+	- File -> Document properties
+		- "Resize page to drawing or selection"
+- Change drawing stroke properties to export lines with only one pixel thickness
+	- Object -> Fill and stroke -> Stroke style
+		- Change width to a very low value to avoid exporting a line with 2 pixels width (0.01 for example, but it may be necessary to increase this value if the exported image has missing lines)
+		- Change "Join" and "Cap" to square shapes
+- Export raster map
+	- File -> Export bitmap
+		- Choose "Selection" and adjust the width and height if necessary
+		- Choose the file name and path
+		- Export

@@ -1,0 +1,18 @@
+- Open .png in Gimp (http://www.gimp.org/)
+- Remove Alpha channel
+	- Layer -> Transparency -> Remove alpha channel
+- Convert image to black and white
+	- Colors -> Threshold
+		- Click "Auto" and adjust the threshold to show only the desired parts (activate preview and check if all map parts are shown and there aren't too many lines with more than one pixel width)
+- Correct map if necessary
+	- Tools -> Paint tools -> Pencil
+		- Change brush type to "Pixel" and adjust size to 1
+		- Edit map
+			- Control + "Left Click" to pick colors from the image
+			- "Left Click" + "Hold shift" + "move mouse" to measure pixels from clicked point
+			- Shift + "Mouse wheel" to move image left and right
+			- Control + "Mouse wheel" to zoom in and out
+- Export image as pgm to be loaded by the ros map server
+	- File -> Export as
+		- Change extension to pgm
+		- Export -> Raw -> Export

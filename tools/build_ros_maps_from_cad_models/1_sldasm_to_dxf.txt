@@ -1,0 +1,38 @@
+- Open .sldasm 3D model in SolidWorks (http://www.solidworks.com/)
+- Remove sections that are not part of the map
+	- Extrude cut
+		- Sketch -> Sketch
+			- Select plane
+			- Draw rectangle
+				- Use "Smart dimensions" to automatically fit the rectangle to the geometry
+		- Assembly -> Assembly features -> Extrude cut
+			- Select direction and dimensions of cut
+	- Keep extruding / removing until only the desired parts remain
+		- For measuring distances
+			- Evaluate -> Measure
+				- Select source and target geometry [points, lines, planes]
+- Make 2D drawing
+	- File -> Make drawing from assembly
+		- Custom sheet size -> Insert size of drawing in the units of the real model (add some margin)
+		- Drag "Top" view into the drawing and make sure the full drawing is inside the print area
+		- Select the inserted object and in the "Drawing view" (left panel)
+			- Adjust scale to 1:1
+			- Adjust dimension type to "True"
+			- Adjust display to "High quality"
+- Export 2D drawing
+	- Vector format (recommended)
+		- File -> Save as -> DXF
+			- Options
+				- Version: R2013
+				- Scale: 1:1
+				- Enable merging
+				- Export all sheets to one file
+	- Raster format
+		- File -> Save as -> tif
+			- Options:
+				- Image type: Black & white
+				- Tiff compression: Group 4 Fax
+				- Print capture
+				- Use sheet size
+				- DPI: 200
+				- Paper size: User defined
