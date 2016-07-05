@@ -51,10 +51,8 @@
 	<run_depend>tf2</run_depend>
 
 	<!-- other ros packages (run only) -->
-	<run_depend>rospy</run_depend>
 	<run_depend>rosbag</run_depend>
 	<run_depend>roslib</run_depend>
-	<run_depend>sensor_msgs</run_depend>
 	<run_depend>tf</run_depend>
 	<run_depend>tf2_msgs</run_depend>
 
