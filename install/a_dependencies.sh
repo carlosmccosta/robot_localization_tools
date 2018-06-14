@@ -8,9 +8,9 @@ echo "##########################################################################
 echo "##### Checking and installing dependencies for robot_localization_tools ros package"
 echo "####################################################################################################"
 
-sudo apt-get update
-sudo apt-get upgrade ${install_args}
-sudo apt-get dist-upgrade ${install_args}
+#sudo apt-get update
+#sudo apt-get upgrade ${install_args}
+#sudo apt-get dist-upgrade ${install_args}
 
 # required system dependencies
 sudo apt-get install collectl ${install_args}
@@ -43,8 +43,8 @@ sudo apt-get install ros-${ros_version}-tf2 ${install_args}
 sudo apt-get install ros-${ros_version}-tf2-msgs ${install_args}
 
 
-sudo apt-get upgrade ${install_args}
-sudo apt-get dist-upgrade ${install_args}
+#sudo apt-get upgrade ${install_args}
+#sudo apt-get dist-upgrade ${install_args}
 
 
 echo "\n\n"

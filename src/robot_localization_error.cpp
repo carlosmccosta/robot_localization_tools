@@ -42,6 +42,7 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	private_node_handle->param("map_odom_only_frame_id", map_odom_only_frame_id_, std::string("map_odom_only"));
 	private_node_handle->param("odom_frame_id", odom_frame_id_, std::string("odom"));
 	private_node_handle->param("base_link_frame_id", base_link_frame_id_, std::string("base_footprint"));
+	private_node_handle->param("base_link_ground_truth_frame_id", base_link_ground_truth_frame_id_, std::string(base_link_frame_id_));
 	private_node_handle->param("publish_rate", publish_rate_, 100.0);
 	private_node_handle->param("pose_publishers_sampling_rate", pose_publishers_sampling_rate_, 10);
 
@@ -190,7 +191,7 @@ bool RobotLocalizationError::getGroundTruthPose(const ros::Time& time_stamp, geo
 		tf2::Transform localization_tf_odom_to_map;
 		if (tf_collector_.lookForTransform(localization_tf_odom_to_map, map_ground_truth_frame_id_, odom_frame_id_, time_stamp)) {
 			tf2::Transform localization_tf_base_to_odom;
-			if (tf_collector_.lookForTransform(localization_tf_base_to_odom, odom_frame_id_, base_link_frame_id_, time_stamp)) {
+			if (tf_collector_.lookForTransform(localization_tf_base_to_odom, odom_frame_id_, base_link_ground_truth_frame_id_, time_stamp)) {
 				tf2::Transform localization_tf = localization_tf_odom_to_map.inverse() * localization_tf_base_to_odom;
 				laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, ground_truth_pose_out);
 				return true;
@@ -198,7 +199,7 @@ bool RobotLocalizationError::getGroundTruthPose(const ros::Time& time_stamp, geo
 		}
 	} else {
 		tf2::Transform localization_tf;
-		if (tf_collector_.lookForTransform(localization_tf, map_ground_truth_frame_id_, base_link_frame_id_, time_stamp)) {
+		if (tf_collector_.lookForTransform(localization_tf, map_ground_truth_frame_id_, base_link_ground_truth_frame_id_, time_stamp)) {
 			laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_tf, ground_truth_pose_out);
 			return true;
 		}
@@ -210,7 +211,7 @@ bool RobotLocalizationError::getGroundTruthPose(const ros::Time& time_stamp, geo
 
 bool RobotLocalizationError::getOdometryPose(const ros::Time& time_stamp, geometry_msgs::Pose& odometry_pose_out) {
 	tf2::Transform localization_odom_tf;
-	if (tf_collector_.lookForTransform(localization_odom_tf, map_odom_only_frame_id_, base_link_frame_id_, time_stamp)) {
+	if (!map_odom_only_frame_id_.empty() && !base_link_frame_id_.empty() && tf_collector_.lookForTransform(localization_odom_tf, map_odom_only_frame_id_, base_link_frame_id_, time_stamp)) {
 		laserscan_to_pointcloud::tf_rosmsg_eigen_conversions::transformTF2ToMsg(localization_odom_tf, odometry_pose_out);
 		return true;
 	}

@@ -97,6 +97,7 @@ class RobotLocalizationError {
 		std::string map_frame_id_;
 		std::string odom_frame_id_;
 		std::string base_link_frame_id_;
+		std::string base_link_ground_truth_frame_id_;
 		int pose_publishers_sampling_rate_;
 		ros::Duration tf_lookup_timeout_;
 		std::ofstream localization_poses_output_stream_;
