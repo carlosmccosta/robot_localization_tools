@@ -13,7 +13,9 @@
 	<arg name="pose_publishers_sampling_rate" default="10" />						<!-- collect 1 out of pose_publishers_sampling_rate poses (< 0 or 1 -> collects all poses) -->
 	<arg name="pose_stamped_topic" default="" />									<!-- empty to disable listening to geometry_msgs::PoseStamped messages -->
 	<arg name="pose_stamped_with_covariance_pose_topic" default="/initialpose" />	<!-- empty to disable listening to geometry_msgs::PoseWithCovarianceStamped messages -->
+	<arg name="pose_error_publish_topic" default="localization_error" />
 	<arg name="tf_lookup_timeout" default="0.15" />
+	<arg name="use_time_0_when_querying_tf" default="false" />
 	<arg name="localization_poses_output_filename" default="" />
 	<arg name="odom_only_poses_output_filename" default="" />
 	<arg name="ground_truth_poses_output_filename" default="" />
@@ -32,6 +34,7 @@
 		<param name="publish_rate" type="double" value="$(arg publish_rate)" />
 		<param name="pose_publishers_sampling_rate" type="int" value="$(arg pose_publishers_sampling_rate)" />
 		<param name="tf_lookup_timeout" type="double" value="$(arg tf_lookup_timeout)" />
+		<param name="use_time_0_when_querying_tf" value="$(arg use_time_0_when_querying_tf)" />
 		<param name="localization_poses_output_filename" type="str" value="$(arg localization_poses_output_filename)" />
 		<param name="odom_only_poses_output_filename" type="str" value="$(arg odom_only_poses_output_filename)" />
 		<param name="ground_truth_poses_output_filename" type="str" value="$(arg ground_truth_poses_output_filename)" />
@@ -40,7 +43,7 @@
 		<param name="save_poses_orientation_vector" type="bool" value="$(arg save_poses_orientation_vector)" />
 		<param name="pose_stamped_topic" type="str" value="$(arg pose_stamped_topic)" />
 		<param name="pose_stamped_with_covariance_pose_topic" type="str" value="$(arg pose_stamped_with_covariance_pose_topic)" />
-		<param name="pose_error_publish_topic" type="str" value="localization_error" />
+		<param name="pose_error_publish_topic" type="str" value="$(arg pose_error_publish_topic)" />
 		<param name="pose_error_odometry_publish_topic" type="str" value="odometry_error" />
 		<param name="localization_poses_publisher_topic" type="str" value="localization_poses" />
 		<param name="odometry_poses_publisher_topic" type="str" value="odometry_poses" />

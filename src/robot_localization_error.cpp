@@ -27,6 +27,7 @@ RobotLocalizationError::RobotLocalizationError() :
 		save_poses_orientation_quaternion_(true),
 		save_poses_orientation_vector_(true),
 		tf_lookup_timeout_(0),
+		use_time_0_when_querying_tf_(false),
 		last_update_time_(ros::Time::now()),
 		number_poses_received_since_last_publish_(0) {}
 
@@ -51,6 +52,8 @@ void RobotLocalizationError::readConfigurationFromParameterServer(ros::NodeHandl
 	double tf_lookup_timeout;
 	private_node_handle->param("tf_lookup_timeout", tf_lookup_timeout, 0.1);
 	tf_lookup_timeout_.fromSec(tf_lookup_timeout);
+
+	private_node_handle->param("use_time_0_when_querying_tf", use_time_0_when_querying_tf_, false);
 
 	std::string localization_poses_output_filename, odom_only_poses_output_filename, ground_truth_poses_output_filename;
 	private_node_handle->param("localization_poses_output_filename", localization_poses_output_filename, std::string(""));
@@ -285,7 +288,7 @@ void RobotLocalizationError::updateLocalizationError() {
 	tf2::Transform localization_tf;
 	ros::Time time_stamp = ros::Time::now();
 
-	if (tf_collector_.lookForTransform(localization_tf, map_frame_id_, base_link_frame_id_, time_stamp)) {
+	if (tf_collector_.lookForTransform(localization_tf, map_frame_id_, base_link_frame_id_, use_time_0_when_querying_tf_ ? ros::Time(0.0) : time_stamp, tf_lookup_timeout_)) {
 		geometry_msgs::PoseStampedPtr pose(new geometry_msgs::PoseStamped());
 		pose->header.stamp = time_stamp;
 		pose->header.frame_id = map_frame_id_;
